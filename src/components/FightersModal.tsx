@@ -12,8 +12,15 @@ interface FightersModalProps {
 
 const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters, onParticipantClick }) => {
   const [search, setSearch] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'id', direction: 'asc' });
 
   if (!isOpen) return null;
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
 
   const filteredFighters = fighters
     .filter(f => {
@@ -23,7 +30,28 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
         (f.skillBonus?.name ?? '').toLowerCase().includes(q)
       );
     })
-    .sort((a, b) => a.fullName.localeCompare(b.fullName));
+    .sort((a, b) => {
+      let aVal: any = a[sortConfig.key as keyof typeof a];
+      let bVal: any = b[sortConfig.key as keyof typeof b];
+
+      if (sortConfig.key === 'startingBonus') {
+        aVal = a.skillBonus?.value ?? -999; // Treat "no bonus" as very low
+        bVal = b.skillBonus?.value ?? -999;
+      }
+      if (sortConfig.key === 'name') {
+        aVal = a.fullName;
+        bVal = b.fullName;
+      }
+
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  const renderSortIndicator = (key: string) => {
+    if (sortConfig.key === key) return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+    return '';
+  };
 
   return (
     <div style={{
@@ -90,46 +118,38 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
 
         {/* List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 2rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-            {filteredFighters.map(f => {
-              const bonus = f.skillBonus;
-              return (
-                <div key={f.id} style={{
-                  padding: '1rem',
-                  borderRadius: '1rem',
-                  border: '1px solid var(--border)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  background: bonus ? 'rgba(29, 78, 216, 0.02)' : 'transparent',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                }}
-                className="header-button"
-                onClick={() => {
-                  onParticipantClick(f.fullName);
-                  onClose();
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                    <div>
-                      <div style={{ fontWeight: '700', fontSize: '1rem' }}>{f.fullName}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: '500' }}>
-                        ID: {f.id} • BORN {f.birthYear}
-                      </div>
-                    </div>
-                  </div>
-                  {bonus ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '600' }}>
-                      <Trophy size={14} /> {bonus.name} {bonus.value > 0 ? `+${bonus.value}` : bonus.value}
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
-                      No starting modifiers
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className="data-table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th onClick={() => handleSort('id')} className={sortConfig.key === 'id' ? 'active-sort' : ''}>ID{renderSortIndicator('id')}</th>
+                  <th onClick={() => handleSort('name')} className={sortConfig.key === 'name' ? 'active-sort' : ''}>Name{renderSortIndicator('name')}</th>
+                  <th onClick={() => handleSort('birthYear')} className={sortConfig.key === 'birthYear' ? 'active-sort' : ''}>Birth Year{renderSortIndicator('birthYear')}</th>
+                  <th onClick={() => handleSort('startingBonus')} className={sortConfig.key === 'startingBonus' ? 'active-sort' : ''}>Starting Bonus{renderSortIndicator('startingBonus')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFighters.map(f => {
+                  const bonus = f.skillBonus;
+                  return (
+                    <tr key={f.id} onClick={() => { onParticipantClick(f.fullName); onClose(); }}>
+                      <td style={{ color: 'var(--text-dim)' }}>{f.id}</td>
+                      <td><span style={{ fontWeight: '700' }}>{f.fullName}</span></td>
+                      <td style={{ color: 'var(--text-dim)' }}>{f.birthYear}</td>
+                      <td>
+                        {bonus ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)', fontWeight: '700', fontSize: '0.75rem', background: 'rgba(29, 78, 216, 0.05)', padding: '0.25rem 0.5rem', borderRadius: '0.5rem', border: '1px solid rgba(29, 78, 216, 0.1)' }}>
+                            <Trophy size={12} /> {bonus.name} {bonus.value > 0 ? `+${bonus.value}` : bonus.value}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic' }}>None</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 

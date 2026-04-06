@@ -263,3 +263,71 @@ h1, h2, h3 {
   color: #991b1b;
   border: 1px solid #fecaca;
 }
+
+/* Data Table Spreadsheets */
+.data-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: white;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background-color: var(--panel);
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 1rem 1.5rem;
+  border-bottom: 2px solid var(--border);
+  z-index: 10;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.data-table th:hover {
+  color: var(--primary);
+  background-color: #f1f5f9;
+}
+
+.data-table th.active-sort {
+  color: var(--primary);
+  background-color: #eff6ff;
+}
+
+.data-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 5;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}

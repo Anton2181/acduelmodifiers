@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { fetchAllData } from './services/dataService';
+import { fetchAllData, normalizeName } from './services/dataService';
 import type { ProcessedDuel, Character } from './types';
 import DuelList from './components/DuelList';
 import ModifierDetails from './components/ModifierDetails';
@@ -33,6 +33,14 @@ function App() {
   const [isFightersModalOpen, setIsFightersModalOpen] = useState(false);
   const [isCurrentModifiersOpen, setIsCurrentModifiersOpen] = useState(false);
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
+  const [selectedProfileSnapshot, setSelectedProfileSnapshot] = useState<string>('current');
+
+
+
+  const handleOpenProfile = (name: string, snapshotId: string = 'current') => {
+    setSelectedProfileName(name);
+    setSelectedProfileSnapshot(snapshotId);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -61,7 +69,8 @@ function App() {
 
   const selectedProfileCharacter = useMemo(() => {
     if (!selectedProfileName) return null;
-    return allFighters.find(f => f.fullName === selectedProfileName) || null;
+    const targetNorm = normalizeName(selectedProfileName);
+    return allFighters.find(f => normalizeName(f.fullName) === targetNorm) || null;
   }, [allFighters, selectedProfileName]);
 
   if (loading) {
@@ -130,27 +139,28 @@ function App() {
 
       <ModifierDetails 
         duel={selectedDuel} 
-        onParticipantClick={setSelectedProfileName}
+        onParticipantClick={(name) => handleOpenProfile(name, selectedDuel?.id)}
       />
 
       <FightersModal
         isOpen={isFightersModalOpen}
         onClose={() => setIsFightersModalOpen(false)}
         fighters={allFighters}
-        onParticipantClick={setSelectedProfileName}
+        onParticipantClick={(name) => handleOpenProfile(name, 'starting')}
       />
 
       <CurrentModifiersModal
         isOpen={isCurrentModifiersOpen}
         onClose={() => setIsCurrentModifiersOpen(false)}
         fighters={allFighters}
-        onParticipantClick={setSelectedProfileName}
+        onParticipantClick={(name) => handleOpenProfile(name, 'current')}
       />
 
       <ProfileModal
         isOpen={!!selectedProfileName}
         onClose={() => setSelectedProfileName(null)}
         character={selectedProfileCharacter}
+        initialSnapshotId={selectedProfileSnapshot}
       />
     </div>
   );

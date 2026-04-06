@@ -6,6 +6,7 @@ interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   character: Character | null;
+  initialSnapshotId?: string;
 }
 
 const ProgressBar = ({ current, max, label }: { current: number; max: number; label: string }) => {
@@ -45,12 +46,14 @@ const BooleanRequirement = ({ isMet, label }: { isMet: boolean; label: string })
   );
 };
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character }) => {
-  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string>('current');
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character, initialSnapshotId = 'current' }) => {
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string>(initialSnapshotId);
 
   useEffect(() => {
-    if (character) setSelectedSnapshotId('current');
-  }, [character]);
+    if (isOpen) {
+      setSelectedSnapshotId(initialSnapshotId);
+    }
+  }, [isOpen, character, initialSnapshotId]);
 
   if (!isOpen || !character) return null;
 

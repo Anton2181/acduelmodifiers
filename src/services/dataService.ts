@@ -93,7 +93,7 @@ function getEffectiveSkillBonus(
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const normalizeName = (name: string): string => {
+export const normalizeName = (name: string): string => {
   if (!name) return '';
   return name.toLowerCase()
     .replace(/^(lord|ser|lady|prince|princess|king|queen|the)\s+/i, '')
