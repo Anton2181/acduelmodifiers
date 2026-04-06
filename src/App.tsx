@@ -5,6 +5,7 @@ import DuelList from './components/DuelList';
 import ModifierDetails from './components/ModifierDetails';
 import FightersModal from './components/FightersModal';
 import CurrentModifiersModal from './components/CurrentModifiersModal';
+import ProfileModal from './components/ProfileModal';
 import { Swords, Calendar, Loader2, Users, TrendingUp } from 'lucide-react';
 
 const BTN_STYLE = {
@@ -31,6 +32,7 @@ function App() {
   const [selectedDuelId, setSelectedDuelId] = useState<string | null>(null);
   const [isFightersModalOpen, setIsFightersModalOpen] = useState(false);
   const [isCurrentModifiersOpen, setIsCurrentModifiersOpen] = useState(false);
+  const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -56,6 +58,11 @@ function App() {
   const selectedDuel = useMemo(() => {
     return duels.find(d => d.id === selectedDuelId) || null;
   }, [duels, selectedDuelId]);
+
+  const selectedProfileCharacter = useMemo(() => {
+    if (!selectedProfileName) return null;
+    return allFighters.find(f => f.fullName === selectedProfileName) || null;
+  }, [allFighters, selectedProfileName]);
 
   if (loading) {
     return (
@@ -121,18 +128,29 @@ function App() {
         />
       </main>
 
-      <ModifierDetails duel={selectedDuel} />
+      <ModifierDetails 
+        duel={selectedDuel} 
+        onParticipantClick={setSelectedProfileName}
+      />
 
       <FightersModal
         isOpen={isFightersModalOpen}
         onClose={() => setIsFightersModalOpen(false)}
         fighters={allFighters}
+        onParticipantClick={setSelectedProfileName}
       />
 
       <CurrentModifiersModal
         isOpen={isCurrentModifiersOpen}
         onClose={() => setIsCurrentModifiersOpen(false)}
         fighters={allFighters}
+        onParticipantClick={setSelectedProfileName}
+      />
+
+      <ProfileModal
+        isOpen={!!selectedProfileName}
+        onClose={() => setSelectedProfileName(null)}
+        character={selectedProfileCharacter}
       />
     </div>
   );

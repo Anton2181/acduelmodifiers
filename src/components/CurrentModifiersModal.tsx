@@ -6,6 +6,7 @@ interface CurrentModifiersModalProps {
   isOpen: boolean;
   onClose: () => void;
   fighters: Character[];
+  onParticipantClick: (name: string) => void;
 }
 
 const ModifierRow: React.FC<{ modifier: Modifier }> = ({ modifier: m }) => (
@@ -46,7 +47,7 @@ const ModifierRow: React.FC<{ modifier: Modifier }> = ({ modifier: m }) => (
   </div>
 );
 
-const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, onClose, fighters }) => {
+const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, onClose, fighters, onParticipantClick }) => {
   const [search, setSearch] = useState('');
 
   if (!isOpen) return null;
@@ -121,6 +122,12 @@ const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, o
                   borderRadius: '1rem', border: '1px solid var(--border)',
                   overflow: 'hidden',
                   background: total > 0 ? 'rgba(29,78,216,0.02)' : total < 0 ? 'rgba(220,38,38,0.02)' : 'transparent',
+                  cursor: 'pointer', transition: 'box-shadow 0.2s',
+                }}
+                className="header-button"
+                onClick={() => {
+                  onParticipantClick(f.fullName);
+                  onClose();
                 }}>
                   {/* Card header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>

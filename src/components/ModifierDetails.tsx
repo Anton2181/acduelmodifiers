@@ -4,11 +4,12 @@ import { Swords, Shield, Info, Star } from 'lucide-react';
 
 interface ModifierDetailsProps {
   duel: ProcessedDuel | null;
+  onParticipantClick: (name: string) => void;
 }
 
-const ParticipantPanel: React.FC<{ name: string; age: number | null; modifiers: Modifier[]; total: number; gained: GainedModifier[]; duelsFought: number; duelsWon: number }> = ({ name, age, modifiers, total, gained, duelsFought, duelsWon }) => {
+const ParticipantPanel: React.FC<{ name: string; age: number | null; modifiers: Modifier[]; total: number; gained: GainedModifier[]; duelsFought: number; duelsWon: number; onClick: () => void }> = ({ name, age, modifiers, total, gained, duelsFought, duelsWon, onClick }) => {
   return (
-    <div className="modifier-card">
+    <div className="modifier-card header-button" style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '1.5rem', width: '100%', boxSizing: 'border-box' }} onClick={onClick}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3 style={{ 
@@ -167,7 +168,7 @@ const ParticipantPanel: React.FC<{ name: string; age: number | null; modifiers: 
   );
 };
 
-const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel }) => {
+const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel, onParticipantClick }) => {
   if (!duel) {
     return (
       <div className="side-panels">
@@ -204,6 +205,7 @@ const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel }) => {
         gained={duel.p1Gained}
         duelsFought={duel.p1DuelsFought}
         duelsWon={duel.p1DuelsWon}
+        onClick={() => onParticipantClick(duel.participant1)}
       />
       <ParticipantPanel 
         name={duel.participant2} 
@@ -213,6 +215,7 @@ const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel }) => {
         gained={duel.p2Gained}
         duelsFought={duel.p2DuelsFought}
         duelsWon={duel.p2DuelsWon}
+        onClick={() => onParticipantClick(duel.participant2)}
       />
     </div>
   );

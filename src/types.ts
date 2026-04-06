@@ -20,6 +20,29 @@ export interface Character {
   currentTotal?: number;
   totalDuels?: number;
   totalWins?: number;
+  careerHistory?: CharHistory;
+  snapshots?: CharacterSnapshot[];
+}
+
+export interface CharacterSnapshot {
+  id: string;
+  label: string;
+  history: CharHistory;
+  modifiers: Modifier[];
+  totalModifier: number;
+  age: number | null;
+}
+
+export interface CharHistory {
+  totalDuels: number;
+  totalWins: number;
+  winsAgainstPrimary: number;
+  distinctPrimaryOpponentsDueled: Set<string>;
+  winsAgainstSkillLevel: Map<number, number>;
+  hasWonNoPenaltyAgainstPrimary: boolean;
+  accumulatedManualModifiers: Modifier[];
+  firstDuelYear: number | null;
+  lastEffectiveBonusName: string | null;
 }
 
 export interface Modifier {

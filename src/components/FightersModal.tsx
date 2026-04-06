@@ -6,10 +6,11 @@ interface FightersModalProps {
   isOpen: boolean;
   onClose: () => void;
   fighters: Character[];
+  onParticipantClick: (name: string) => void;
 }
 
 
-const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters }) => {
+const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters, onParticipantClick }) => {
   const [search, setSearch] = useState('');
 
   if (!isOpen) return null;
@@ -100,7 +101,14 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.5rem',
-                  background: bonus ? 'rgba(29, 78, 216, 0.02)' : 'transparent'
+                  background: bonus ? 'rgba(29, 78, 216, 0.02)' : 'transparent',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                }}
+                className="header-button"
+                onClick={() => {
+                  onParticipantClick(f.fullName);
+                  onClose();
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                     <div>

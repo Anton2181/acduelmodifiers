@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import type { Character, ProcessedDuel, Modifier, GainedModifier } from '../types';
+import type { Character, ProcessedDuel, Modifier, GainedModifier, CharHistory } from '../types';
 
 const DUELS_URL = 'https://docs.google.com/spreadsheets/d/1QpAlKSJKM2RfI47KnTf1M5lF-qBa5e8SrZV0vf1J2UU/export?format=csv&gid=2136520867';
 const CHARACTERS_URL = 'https://docs.google.com/spreadsheets/d/1WKSeqB1yX91A2TyD9Lie-mwNkc4qLIrN-pIPbX2knac/export?format=csv&gid=0';
@@ -49,18 +49,6 @@ const MANUAL_STARTING_BONUSES: Record<string, { name: string; value: number }> =
 const MASTER_OFFSET = 5;
 
 // ─── Skill Bonus Progression Tiers (checked highest first) ──────────────────
-
-interface CharHistory {
-  totalDuels: number;
-  totalWins: number;
-  winsAgainstPrimary: number;
-  distinctPrimaryOpponentsDueled: Set<string>;
-  winsAgainstSkillLevel: Map<number, number>; // skill bonus level → count of wins
-  hasWonNoPenaltyAgainstPrimary: boolean;
-  accumulatedManualModifiers: Modifier[];
-  firstDuelYear: number | null;
-  lastEffectiveBonusName: string | null; // for "gained" detection
-}
 
 const SKILL_BONUS_TIERS: { name: string; value: number; check: (h: CharHistory) => boolean }[] = [
   {
@@ -160,6 +148,69 @@ function makeHistory(): CharHistory {
   };
 }
 
+function cloneHistory(h: CharHistory): CharHistory {
+  return {
+    ...h,
+    distinctPrimaryOpponentsDueled: new Set(h.distinctPrimaryOpponentsDueled),
+    winsAgainstSkillLevel: new Map(h.winsAgainstSkillLevel),
+    accumulatedManualModifiers: h.accumulatedManualModifiers.map(m => ({ ...m })),
+  };
+}
+
+const computeStats = (
+  pChar: Character | undefined,
+  effBonus: { name: string; value: number } | null,
+  history: CharHistory,
+  evalYear: number
+) => {
+  const modifiers: Modifier[] = [];
+  if (!pChar) return { age: null, modifiers, totalBonus: 0, totalPenalty: 0, totalModifier: 0 };
+
+  const ageAtCurrent = evalYear - pChar.birthYear;
+
+  // 1. Skill bonus (earned or manual starting)
+  if (effBonus) {
+    modifiers.push({ name: effBonus.name, value: effBonus.value, type: 'bonus', source: 'skill' });
+  }
+
+  // 2. Accumulated manual modifiers (injuries, etc. from prior duels)
+  for (const m of history.accumulatedManualModifiers) {
+    modifiers.push({ ...m });
+  }
+
+  // 3. Age malus (with Master Duelist negation)
+  let ageMalusValue = calculateAgeMalus(ageAtCurrent);
+  if (effBonus?.name === 'Master Duelist' && ageMalusValue < 0) {
+    ageMalusValue = Math.min(0, ageMalusValue + MASTER_OFFSET);
+  }
+  if (ageMalusValue !== 0) {
+    modifiers.push({ name: 'Age Penalty', value: ageMalusValue, type: 'penalty', source: 'age' });
+  }
+
+  // 4. Wasted Youth / Starting Too Late (only for born after 80 DV)
+  if (pChar.birthYear > 80 && history.firstDuelYear !== null) {
+    const ageAtFirstDuel = history.firstDuelYear - pChar.birthYear;
+    if (ageAtFirstDuel >= 35) {
+      modifiers.push({ name: 'Starting Too Late', value: -1, type: 'penalty', source: 'other' });
+    } else if (ageAtFirstDuel >= 25) {
+      modifiers.push({ name: 'Wasted Youth', value: -1, type: 'penalty', source: 'other' });
+    }
+  }
+
+  // Only the highest skill bonus counts; other bonuses (manual) stack
+  const skillBonuses = modifiers.filter(m => m.source === 'skill');
+  const otherBonuses = modifiers.filter(m => m.type === 'bonus' && m.source !== 'skill');
+  const penalties = modifiers.filter(m => m.type === 'penalty');
+
+  const maxSkillValue = skillBonuses.length > 0 ? Math.max(...skillBonuses.map(b => b.value)) : 0;
+  skillBonuses.forEach(b => { if (b.value < maxSkillValue) b.isOverridden = true; });
+
+  const totalBonus = maxSkillValue + otherBonuses.reduce((s, b) => s + b.value, 0);
+  const totalPenalty = penalties.reduce((s, p) => s + p.value, 0);
+
+  return { age: ageAtCurrent, modifiers, totalBonus, totalPenalty, totalModifier: totalBonus + totalPenalty };
+};
+
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
 export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentDate: string, allFighters: Character[] }> => {
@@ -213,6 +264,32 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     getHistory(normName).lastEffectiveBonusName = bonus.name;
   }
 
+  const snapshotsMap = new Map<string, import('../types').CharacterSnapshot[]>();
+
+  const captureSnapshot = (normName: string, id: string, label: string, hist: CharHistory, evalYear: number | null) => {
+    const pChar = characterMap.get(normName);
+    if (!pChar) return;
+    const currentHist = cloneHistory(hist);
+    const effBonus = getEffectiveSkillBonus(normName, currentHist);
+    const stats = evalYear !== null 
+      ? computeStats(pChar, effBonus, currentHist, evalYear)
+      : { age: null, modifiers: effBonus ? [{ name: effBonus.name, value: effBonus.value, type: 'bonus' as const, source: 'skill' as const }] : [], totalModifier: effBonus ? effBonus.value : 0 };
+
+    if (!snapshotsMap.has(normName)) snapshotsMap.set(normName, []);
+    snapshotsMap.get(normName)!.push({
+      id, label,
+      history: currentHist,
+      modifiers: stats.modifiers,
+      totalModifier: stats.totalModifier,
+      age: stats.age
+    });
+  };
+
+  // ── 0. Capture Initial "Starting" Snapshots ──
+  characterMap.forEach((_, normName) => {
+    captureSnapshot(normName, 'starting', 'Starting state (01/94 AC)', getHistory(normName), 94);
+  });
+
   const processedDuels: ProcessedDuel[] = sortedRawDuels.map((d, index) => {
     const duelYear = parseYear(d['Date (in-game)']);
     const normP1 = normalizeName(d['Participant 1']);
@@ -230,61 +307,8 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
 
     // ── Compute modifiers for each participant ──────────────────────────────
 
-    const computeStats = (
-      pChar: Character | undefined,
-      effBonus: { name: string; value: number } | null,
-      history: CharHistory,
-    ) => {
-      const modifiers: Modifier[] = [];
-      if (!pChar) return { age: null, modifiers, totalBonus: 0, totalPenalty: 0, totalModifier: 0 };
-
-      const ageAtDuel = duelYear - pChar.birthYear;
-
-      // 1. Skill bonus (earned or manual starting)
-      if (effBonus) {
-        modifiers.push({ name: effBonus.name, value: effBonus.value, type: 'bonus', source: 'skill' });
-      }
-
-      // 2. Accumulated manual modifiers (injuries, etc. from prior duels)
-      for (const m of history.accumulatedManualModifiers) {
-        modifiers.push({ ...m });
-      }
-
-      // 3. Age malus (with Master Duelist negation)
-      let ageMalusValue = calculateAgeMalus(ageAtDuel);
-      if (effBonus?.name === 'Master Duelist' && ageMalusValue < 0) {
-        ageMalusValue = Math.min(0, ageMalusValue + MASTER_OFFSET);
-      }
-      if (ageMalusValue !== 0) {
-        modifiers.push({ name: 'Age Penalty', value: ageMalusValue, type: 'penalty', source: 'age' });
-      }
-
-      // 4. Wasted Youth / Starting Too Late (only for born after 80 DV)
-      if (pChar.birthYear > 80 && history.firstDuelYear !== null) {
-        const ageAtFirstDuel = history.firstDuelYear - pChar.birthYear;
-        if (ageAtFirstDuel >= 35) {
-          modifiers.push({ name: 'Starting Too Late', value: -1, type: 'penalty', source: 'other' });
-        } else if (ageAtFirstDuel >= 25) {
-          modifiers.push({ name: 'Wasted Youth', value: -1, type: 'penalty', source: 'other' });
-        }
-      }
-
-      // Only the highest skill bonus counts; other bonuses (manual) stack
-      const skillBonuses = modifiers.filter(m => m.source === 'skill');
-      const otherBonuses = modifiers.filter(m => m.type === 'bonus' && m.source !== 'skill');
-      const penalties = modifiers.filter(m => m.type === 'penalty');
-
-      const maxSkillValue = skillBonuses.length > 0 ? Math.max(...skillBonuses.map(b => b.value)) : 0;
-      skillBonuses.forEach(b => { if (b.value < maxSkillValue) b.isOverridden = true; });
-
-      const totalBonus = maxSkillValue + otherBonuses.reduce((s, b) => s + b.value, 0);
-      const totalPenalty = penalties.reduce((s, p) => s + p.value, 0);
-
-      return { age: ageAtDuel, modifiers, totalBonus, totalPenalty, totalModifier: totalBonus + totalPenalty };
-    };
-
-    const stats1 = computeStats(p1Char, p1EffBonus, p1Hist);
-    const stats2 = computeStats(p2Char, p2EffBonus, p2Hist);
+    const stats1 = computeStats(p1Char, p1EffBonus, p1Hist, duelYear);
+    const stats2 = computeStats(p2Char, p2EffBonus, p2Hist, duelYear);
 
     // ── Update history after processing this duel ───────────────────────────
 
@@ -359,7 +383,7 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     if (p1ManualGain) p1Gained.push({ ...p1ManualGain, source: 'manual' });
     if (p2ManualGain) p2Gained.push({ ...p2ManualGain, source: 'manual' });
 
-    return {
+    const currentDuel = {
       id: `duel-${index}`,
       date: d['Date (in-game)'],
       year: duelYear,
@@ -386,6 +410,18 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       p2DuelsFought: p2Hist.totalDuels,
       p2DuelsWon: p2Hist.totalWins,
     } as ProcessedDuel;
+
+    // ── 2. Capture Duel Snapshots ──
+    captureSnapshot(normP1, currentDuel.id, `${duelYear} AC: vs ${d['Participant 2']}`, p1Hist, duelYear);
+    captureSnapshot(normP2, currentDuel.id, `${duelYear} AC: vs ${d['Participant 1']}`, p2Hist, duelYear);
+
+    return currentDuel;
+  });
+
+  // ── 3. Capture Final "Current" Snapshots ──
+  const currentYear = parseYear(currentDateStr);
+  characterMap.forEach((_, normName) => {
+    captureSnapshot(normName, 'current', 'Current state', getHistory(normName), currentYear);
   });
 
   // Build the allFighters list with their final (post-all-duels) effective bonus
@@ -404,43 +440,17 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
 
       // Compute current modifiers as of the current date
       const currentYear = parseYear(currentDateStr);
-      const currentMods: Modifier[] = [];
-
-      if (finalBonus) {
-        currentMods.push({ name: finalBonus.name, value: finalBonus.value, type: 'bonus', source: 'skill' });
-      }
-      for (const m of hist.accumulatedManualModifiers) {
-        currentMods.push({ ...m });
-      }
-      const currentAge = currentYear - c.birthYear;
-      let ageMalus = calculateAgeMalus(currentAge);
-      if (finalBonus?.name === 'Master Duelist' && ageMalus < 0) {
-        ageMalus = Math.min(0, ageMalus + MASTER_OFFSET);
-      }
-      if (ageMalus !== 0) {
-        currentMods.push({ name: 'Age Penalty', value: ageMalus, type: 'penalty', source: 'age' });
-      }
-      if (c.birthYear > 80 && hist.firstDuelYear !== null) {
-        const ageAtFirst = hist.firstDuelYear - c.birthYear;
-        if (ageAtFirst >= 35) currentMods.push({ name: 'Starting Too Late', value: -1, type: 'penalty', source: 'other' });
-        else if (ageAtFirst >= 25) currentMods.push({ name: 'Wasted Youth', value: -1, type: 'penalty', source: 'other' });
-      }
-
-      // Only highest skill bonus counts
-      const skillMods = currentMods.filter(m => m.source === 'skill');
-      const maxSkill = skillMods.length > 0 ? Math.max(...skillMods.map(b => b.value)) : 0;
-      skillMods.forEach(b => { if (b.value < maxSkill) b.isOverridden = true; });
-
-      const totalBonus = maxSkill + currentMods.filter(m => m.type === 'bonus' && m.source !== 'skill').reduce((s, b) => s + b.value, 0);
-      const totalPenalty = currentMods.filter(m => m.type === 'penalty').reduce((s, p) => s + p.value, 0);
+      const stats = computeStats(c, finalBonus, hist, currentYear);
 
       return { 
         ...c, 
         skillBonus: finalBonus, 
-        currentModifiers: currentMods, 
-        currentTotal: totalBonus + totalPenalty,
+        currentModifiers: stats.modifiers, 
+        currentTotal: stats.totalModifier,
         totalDuels: hist.totalDuels,
-        totalWins: hist.totalWins
+        totalWins: hist.totalWins,
+        careerHistory: hist,
+        snapshots: snapshotsMap.get(norm) || []
       };
     });
 
