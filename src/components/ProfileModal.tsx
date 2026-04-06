@@ -71,7 +71,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
   const effSkillName = effSkillMod?.name;
 
   const hasTier = (tierVal: number, specificNames: string[]) => {
-    if (effSkillLevel > tierVal) return true;
     if (effSkillLevel === tierVal && effSkillName) return specificNames.includes(effSkillName);
     return false;
   };
@@ -246,8 +245,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#BE185D' }}>Superior Duelist</div>
                     <div style={{ background: '#FCE7F3', color: '#DB2777', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+3</div>
                   </div>
-                  <ProgressBar current={effSkillLevel >= 3 ? 6 : h.distinctPrimaryOpponentsDueled.size} max={6} label="Fight 6 distinct primary opponents" />
-                  <BooleanRequirement isMet={effSkillLevel >= 3 || (h.winsAgainstSkillLevel.get(2) ?? 0) > 0} label="Win vs +2 level primary opponent" />
+                  <ProgressBar current={hasTier(3, ['Superior Duelist']) ? 6 : h.distinctPrimaryOpponentsDueled.size} max={6} label="Fight 6 distinct primary opponents" />
+                  <BooleanRequirement isMet={hasTier(3, ['Superior Duelist']) || (h.winsAgainstSkillLevel.get(2) ?? 0) > 0} label="Win vs +2 level primary opponent" />
                 </div>
 
                 {/* Tier 4 */}
@@ -256,8 +255,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#9d174d' }}>Expert Duelist</div>
                     <div style={{ background: '#fce7f3', color: '#be185d', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+4</div>
                   </div>
-                  <ProgressBar current={effSkillLevel >= 4 ? 12 : h.distinctPrimaryOpponentsDueled.size} max={12} label="Fight 12 distinct primary opponents" />
-                  <BooleanRequirement isMet={effSkillLevel >= 4 || (h.winsAgainstSkillLevel.get(3) ?? 0) > 0} label="Win vs +3 level primary opponent" />
+                  <ProgressBar current={hasTier(4, ['Expert Duelist']) ? 12 : h.distinctPrimaryOpponentsDueled.size} max={12} label="Fight 12 distinct primary opponents" />
+                  <BooleanRequirement isMet={hasTier(4, ['Expert Duelist']) || (h.winsAgainstSkillLevel.get(3) ?? 0) > 0} label="Win vs +3 level primary opponent" />
                 </div>
 
                 {/* Tier 5 */}
@@ -269,8 +268,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '900', padding: '0.2rem 0.75rem', borderRadius: '0.5rem', fontSize: '1rem' }}>+5</div>
                   </div>
                   <p style={{ fontSize: '0.8rem', color: '#92400e', marginBottom: '1rem' }}>Master duelists also negate age-based maluses up to -5.</p>
-                  <ProgressBar current={effSkillLevel >= 5 ? 24 : h.distinctPrimaryOpponentsDueled.size} max={24} label="Fight 24 distinct primary opponents" />
-                  <BooleanRequirement isMet={effSkillLevel >= 5 || (h.winsAgainstSkillLevel.get(4) ?? 0) > 0} label="Win vs +4 level primary opponent" />
+                  <ProgressBar current={hasTier(5, ['Master Duelist']) ? 24 : h.distinctPrimaryOpponentsDueled.size} max={24} label="Fight 24 distinct primary opponents" />
+                  <BooleanRequirement isMet={hasTier(5, ['Master Duelist']) || (h.winsAgainstSkillLevel.get(4) ?? 0) > 0} label="Win vs +4 level primary opponent" />
                 </div>
 
               </div>

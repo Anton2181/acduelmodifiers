@@ -213,7 +213,7 @@ const computeStats = (
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
-export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentDate: string, allFighters: Character[] }> => {
+export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentDate: string, allFighters: Character[], missingCharacters: string[] }> => {
   const [duelsRes, charactersRes, metadataRes] = await Promise.all([
     fetch(DUELS_URL).then(res => res.text()),
     fetch(CHARACTERS_URL).then(res => res.text()),
@@ -290,6 +290,8 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     captureSnapshot(normName, 'starting', 'Starting state (01/94 AC)', getHistory(normName), 94);
   });
 
+  const missingCharactersSet = new Set<string>();
+
   const processedDuels: ProcessedDuel[] = sortedRawDuels.map((d, index) => {
     const duelYear = parseYear(d['Date (in-game)']);
     const normP1 = normalizeName(d['Participant 1']);
@@ -298,6 +300,10 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
 
     const p1Char = characterMap.get(normP1);
     const p2Char = characterMap.get(normP2);
+
+    if (d['Participant 1'] && !p1Char) missingCharactersSet.add(d['Participant 1']);
+    if (d['Participant 2'] && !p2Char) missingCharactersSet.add(d['Participant 2']);
+
     const p1Hist = getHistory(normP1);
     const p2Hist = getHistory(normP2);
 
@@ -455,5 +461,5 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       };
     });
 
-  return { duels: processedDuels, currentDate: currentDateStr, allFighters };
+  return { duels: processedDuels, currentDate: currentDateStr, allFighters, missingCharacters: Array.from(missingCharactersSet).sort() };
 };

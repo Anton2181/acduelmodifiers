@@ -34,6 +34,7 @@ function App() {
   const [isCurrentModifiersOpen, setIsCurrentModifiersOpen] = useState(false);
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
   const [selectedProfileSnapshot, setSelectedProfileSnapshot] = useState<string>('current');
+  const [missingCharacters, setMissingCharacters] = useState<string[]>([]);
 
 
 
@@ -45,10 +46,11 @@ function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const { duels, currentDate, allFighters } = await fetchAllData();
+        const { duels, currentDate, allFighters, missingCharacters } = await fetchAllData();
         setDuels(duels);
         setCurrentDate(currentDate);
         setAllFighters(allFighters);
+        setMissingCharacters(missingCharacters);
         if (duels.length > 0) {
           setSelectedDuelId(duels[0].id);
         }
@@ -117,6 +119,16 @@ function App() {
             <TrendingUp size={18} style={{ color: 'var(--primary)' }} />
             Current Modifiers
           </button>
+
+          {import.meta.env.DEV && missingCharacters.length > 0 && (
+            <button
+              onClick={() => alert(`Characters missing from Chronicle:\n\n${missingCharacters.join('\n')}`)}
+              style={{ ...BTN_STYLE, color: '#dc2626', borderColor: '#fecaca', background: '#fef2f2' }}
+              className="header-button"
+            >
+              Missing ({missingCharacters.length})
+            </button>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
             <Calendar size={18} style={{ color: 'var(--primary)' }} />
