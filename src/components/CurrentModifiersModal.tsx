@@ -126,7 +126,9 @@ const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, o
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
                     <div>
                       <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>{f.fullName}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: '500' }}>ID: {f.id} • BORN {f.birthYear}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: '500' }}>
+                        ID: {f.id} • BORN {f.birthYear} • {f.totalDuels ?? 0} DUEL{(f.totalDuels ?? 0) !== 1 && 'S'} ({f.totalWins ?? 0} WON)
+                      </div>
                     </div>
                     <div style={{
                       background: total > 0 ? '#f0fdf4' : total < 0 ? '#fef2f2' : '#f8fafc',

@@ -18,6 +18,8 @@ export interface Character {
   skillBonus?: { name: string; value: number } | null;
   currentModifiers?: Modifier[];
   currentTotal?: number;
+  totalDuels?: number;
+  totalWins?: number;
 }
 
 export interface Modifier {
@@ -46,4 +48,8 @@ export interface ProcessedDuel extends Duel {
   p2TotalModifier: number;
   p1Gained: GainedModifier[];
   p2Gained: GainedModifier[];
+  p1DuelsFought: number;
+  p1DuelsWon: number;
+  p2DuelsFought: number;
+  p2DuelsWon: number;
 }

@@ -1,43 +1,55 @@
 import React from 'react';
 import type { ProcessedDuel, Modifier, GainedModifier } from '../types';
-import { Swords, User, Shield, Info, Star } from 'lucide-react';
+import { Swords, Shield, Info, Star } from 'lucide-react';
 
 interface ModifierDetailsProps {
   duel: ProcessedDuel | null;
 }
 
-const ParticipantPanel: React.FC<{ name: string; age: number | null; modifiers: Modifier[]; total: number; gained: GainedModifier[] }> = ({ name, age, modifiers, total, gained }) => {
+const ParticipantPanel: React.FC<{ name: string; age: number | null; modifiers: Modifier[]; total: number; gained: GainedModifier[]; duelsFought: number; duelsWon: number }> = ({ name, age, modifiers, total, gained, duelsFought, duelsWon }) => {
   return (
     <div className="modifier-card">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ 
-          padding: '0.75rem', 
-          background: 'rgba(29, 78, 216, 0.05)', 
-          color: 'var(--primary)', 
-          borderRadius: '1rem',
-          border: '1px solid rgba(29, 78, 216, 0.1)'
-        }}>
-          <User size={24} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.02em', color: 'var(--text)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={{ 
+            fontSize: '1.4rem', 
+            fontWeight: '800', 
+            lineHeight: 1.1,
+            color: 'var(--text)', 
+            marginBottom: '0.75rem' 
+          }}>
             {name || 'Unknown'}
           </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: 'var(--text-dim)', fontWeight: '600' }}>
-              AGE {age ?? 'Unknown'}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            <span style={{ 
+              fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: '700', 
+              background: '#f8fafc', padding: '0.2rem 0.5rem', 
+              borderRadius: '0.35rem', border: '1px solid var(--border)',
+              letterSpacing: '0.02em'
+            }}>
+              AGE {age ?? '?'}
+            </span>
+            <span style={{ 
+              fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: '700', 
+              background: '#f8fafc', padding: '0.2rem 0.5rem', 
+              borderRadius: '0.35rem', border: '1px solid var(--border)',
+              letterSpacing: '0.02em'
+            }}>
+              {duelsFought} DUEL{duelsFought !== 1 && 'S'} ({duelsWon} WON)
             </span>
           </div>
         </div>
         <div style={{ 
+          flexShrink: 0,
           background: total > 0 ? '#f0fdf4' : total < 0 ? '#fef2f2' : '#f8fafc', 
           border: '1px solid',
           borderColor: total > 0 ? '#dcfce7' : total < 0 ? '#fee2e2' : 'var(--border)',
-          borderRadius: '1rem',
-          padding: '0.75rem 1rem',
-          textAlign: 'center'
+           borderRadius: '0.75rem',
+          padding: '0.6rem 0.8rem',
+          textAlign: 'center',
+          minWidth: '64px'
         }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.1rem' }}>Total</div>
+          <div style={{ fontSize: '0.65rem', fontWeight: '800', color: total > 0 ? '#15803d' : total < 0 ? '#b91c1c' : 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '0.1rem', letterSpacing: '0.05em' }}>Total</div>
           <div style={{ 
             fontSize: '1.25rem', 
             fontWeight: '900', 
@@ -190,6 +202,8 @@ const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel }) => {
         modifiers={duel.p1Modifiers} 
         total={duel.p1TotalModifier}
         gained={duel.p1Gained}
+        duelsFought={duel.p1DuelsFought}
+        duelsWon={duel.p1DuelsWon}
       />
       <ParticipantPanel 
         name={duel.participant2} 
@@ -197,6 +211,8 @@ const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel }) => {
         modifiers={duel.p2Modifiers} 
         total={duel.p2TotalModifier}
         gained={duel.p2Gained}
+        duelsFought={duel.p2DuelsFought}
+        duelsWon={duel.p2DuelsWon}
       />
     </div>
   );

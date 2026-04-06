@@ -52,6 +52,7 @@ const MASTER_OFFSET = 5;
 
 interface CharHistory {
   totalDuels: number;
+  totalWins: number;
   winsAgainstPrimary: number;
   distinctPrimaryOpponentsDueled: Set<string>;
   winsAgainstSkillLevel: Map<number, number>; // skill bonus level → count of wins
@@ -148,6 +149,7 @@ function parseManualGain(raw: string | undefined): Modifier | null {
 function makeHistory(): CharHistory {
   return {
     totalDuels: 0,
+    totalWins: 0,
     winsAgainstPrimary: 0,
     distinctPrimaryOpponentsDueled: new Set(),
     winsAgainstSkillLevel: new Map(),
@@ -295,6 +297,9 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     const p1Won = normWinner === normP1;
     const p2Won = normWinner === normP2;
 
+    if (p1Won) p1Hist.totalWins++;
+    if (p2Won) p2Hist.totalWins++;
+
     // Update P1's record vs primary character P2
     if (p2Char) {
       p1Hist.distinctPrimaryOpponentsDueled.add(normP2);
@@ -373,10 +378,13 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       p1TotalPenalty: stats1.totalPenalty,
       p1TotalModifier: stats1.totalModifier,
       p2TotalBonus: stats2.totalBonus,
-      p2TotalPenalty: stats2.totalPenalty,
       p2TotalModifier: stats2.totalModifier,
       p1Gained,
       p2Gained,
+      p1DuelsFought: p1Hist.totalDuels,
+      p1DuelsWon: p1Hist.totalWins,
+      p2DuelsFought: p2Hist.totalDuels,
+      p2DuelsWon: p2Hist.totalWins,
     } as ProcessedDuel;
   });
 
@@ -426,7 +434,14 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       const totalBonus = maxSkill + currentMods.filter(m => m.type === 'bonus' && m.source !== 'skill').reduce((s, b) => s + b.value, 0);
       const totalPenalty = currentMods.filter(m => m.type === 'penalty').reduce((s, p) => s + p.value, 0);
 
-      return { ...c, skillBonus: finalBonus, currentModifiers: currentMods, currentTotal: totalBonus + totalPenalty };
+      return { 
+        ...c, 
+        skillBonus: finalBonus, 
+        currentModifiers: currentMods, 
+        currentTotal: totalBonus + totalPenalty,
+        totalDuels: hist.totalDuels,
+        totalWins: hist.totalWins
+      };
     });
 
   return { duels: processedDuels, currentDate: currentDateStr, allFighters };
