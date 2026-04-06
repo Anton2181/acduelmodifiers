@@ -310,6 +310,11 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     const stats1 = computeStats(p1Char, p1EffBonus, p1Hist, duelYear);
     const stats2 = computeStats(p2Char, p2EffBonus, p2Hist, duelYear);
 
+    // ── 0.5 Capture Duel Snapshots (State going INTO the duel) ──
+    const duelId = `duel-${index}`;
+    captureSnapshot(normP1, duelId, `${duelYear} AC: vs ${d['Participant 2']}`, p1Hist, duelYear);
+    captureSnapshot(normP2, duelId, `${duelYear} AC: vs ${d['Participant 1']}`, p2Hist, duelYear);
+
     // ── Update history after processing this duel ───────────────────────────
 
     if (p1Hist.firstDuelYear === null) p1Hist.firstDuelYear = duelYear;
@@ -410,10 +415,6 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       p2DuelsFought: p2Hist.totalDuels,
       p2DuelsWon: p2Hist.totalWins,
     } as ProcessedDuel;
-
-    // ── 2. Capture Duel Snapshots ──
-    captureSnapshot(normP1, currentDuel.id, `${duelYear} AC: vs ${d['Participant 2']}`, p1Hist, duelYear);
-    captureSnapshot(normP2, currentDuel.id, `${duelYear} AC: vs ${d['Participant 1']}`, p2Hist, duelYear);
 
     return currentDuel;
   });

@@ -63,7 +63,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character 
   const mods = selectedSnapshot.modifiers;
   const total = selectedSnapshot.totalModifier;
   const currentAge = selectedSnapshot.age;
-  const effSkillLevel = mods.find(m => m.source === 'skill' && !m.isOverridden)?.value ?? 0;
+  const effSkillMod = mods.find(m => m.source === 'skill' && !m.isOverridden);
+  const effSkillLevel = effSkillMod?.value ?? 0;
+  const effSkillName = effSkillMod?.name;
+
+  const hasTier = (tierVal: number, specificNames: string[]) => {
+    if (effSkillLevel > tierVal) return true;
+    if (effSkillLevel === tierVal && effSkillName) return specificNames.includes(effSkillName);
+    return false;
+  };
 
   return (
     <div style={{
@@ -201,7 +209,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character 
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#b45309' }}>Proven Duelist</div>
                     <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+1</div>
                   </div>
-                  <BooleanRequirement isMet={effSkillLevel >= 1 || h.hasWonNoPenaltyAgainstPrimary} label="Win vs primary character (No penalties)" />
+                  <BooleanRequirement isMet={hasTier(1, ['Proven Duelist']) || h.hasWonNoPenaltyAgainstPrimary} label="Win vs primary character (No penalties)" />
                 </div>
 
                 <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
@@ -209,7 +217,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character 
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#b45309' }}>Experienced Duelist</div>
                     <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+1</div>
                   </div>
-                  <ProgressBar current={effSkillLevel >= 1 ? 6 : h.totalDuels} max={6} label="Fight 6 duels total" />
+                  <ProgressBar current={hasTier(1, ['Experienced Duelist']) ? 6 : h.totalDuels} max={6} label="Fight 6 duels total" />
                 </div>
 
                 {/* Tier 2 */}
@@ -218,7 +226,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character 
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#4338ca' }}>Good Duelist</div>
                     <div style={{ background: '#e0e7ff', color: '#4f46e5', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+2</div>
                   </div>
-                  <BooleanRequirement isMet={effSkillLevel >= 2 || (h.winsAgainstSkillLevel.get(1) ?? 0) > 0} label="Win vs +1 level primary opponent" />
+                  <BooleanRequirement isMet={hasTier(2, ['Good Duelist']) || (h.winsAgainstSkillLevel.get(1) ?? 0) > 0} label="Win vs +1 level primary opponent" />
                 </div>
 
                 <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
@@ -226,7 +234,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character 
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#4338ca' }}>Veteran Duelist</div>
                     <div style={{ background: '#e0e7ff', color: '#4f46e5', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+2</div>
                   </div>
-                  <ProgressBar current={effSkillLevel >= 2 ? 6 : h.winsAgainstPrimary} max={6} label="Win 6 duels vs primary characters" />
+                  <ProgressBar current={hasTier(2, ['Veteran Duelist']) ? 6 : h.winsAgainstPrimary} max={6} label="Win 6 duels vs primary characters" />
                 </div>
 
                 {/* Tier 3 */}
