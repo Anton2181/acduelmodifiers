@@ -7,7 +7,7 @@ const METADATA_URL = 'https://docs.google.com/spreadsheets/d/1QpAlKSJKM2RfI47KnT
 
 // Manual starting bonuses — for pre-game history, ward-based bonuses (Superior Tutelage),
 // or any condition that cannot be derived from the duel log alone.
-const MANUAL_STARTING_BONUSES: Record<string, { name: string; value: number }> = {
+export const MANUAL_STARTING_BONUSES: Record<string, { name: string; value: number }> = {
   'daemon velaryon': { name: 'Proven Duelist', value: 1 },
   'aegon targaryen': { name: 'Proven Duelist', value: 1 },
   'harrold harroway': { name: 'Proven Duelist', value: 1 },

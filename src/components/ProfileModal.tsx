@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Character } from '../types';
 import { X, User, Trophy, Target, ShieldCheck, ChevronRight } from 'lucide-react';
+import { normalizeName, MANUAL_STARTING_BONUSES } from '../services/dataService';
+
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -69,8 +71,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
   const effSkillMod = mods.find(m => m.source === 'skill' && !m.isOverridden);
   const effSkillLevel = effSkillMod?.value ?? 0;
   const effSkillName = effSkillMod?.name;
+  
+  const initialBonusName = character ? MANUAL_STARTING_BONUSES[normalizeName(character.fullName)]?.name : null;
 
   const hasTier = (tierVal: number, specificNames: string[]) => {
+    if (initialBonusName && specificNames.includes(initialBonusName)) return true;
     if (effSkillLevel === tierVal && effSkillName) return specificNames.includes(effSkillName);
     return false;
   };
