@@ -142,9 +142,9 @@ const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, o
                   const total = f.currentTotal ?? 0;
                   const age = f.snapshots?.[f.snapshots.length - 1]?.age ?? '?';
                   return (
-                    <tr key={f.id} onClick={() => { onParticipantClick(f.fullName); onClose(); }}>
+                    <tr key={f.id} onClick={() => { onParticipantClick(f.fullName); onClose(); }} style={{ opacity: f.isDead ? 0.65 : 1, filter: f.isDead ? 'grayscale(0.8)' : 'none' }}>
                       <td style={{ color: 'var(--text-dim)' }}>{f.id}</td>
-                      <td><span style={{ fontWeight: '700' }}>{f.fullName}</span></td>
+                      <td><span style={{ fontWeight: '700' }}>{f.fullName}</span>{f.isDead && <span title={`Died at age ${f.ageFromSheet}`} style={{ marginLeft: '0.4rem', filter: 'grayscale(1)', opacity: 0.7, cursor: 'help' }}>💀</span>}</td>
                       <td style={{ color: 'var(--text-dim)' }}>{age}</td>
                       <td style={{ color: 'var(--text-dim)' }}>{f.totalDuels ?? 0}</td>
                       <td style={{ color: '#16a34a', fontWeight: '700' }}>{f.totalWins ?? 0}</td>

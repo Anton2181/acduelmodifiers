@@ -114,11 +114,20 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
               <User size={32} />
             </div>
             
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', lineHeight: 1.1, color: 'var(--text)', marginBottom: '0.25rem' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', lineHeight: 1.1, color: 'var(--text)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               {character.fullName}
+              {character.isDead && <span title="Deceased" style={{ filter: 'grayscale(1)', opacity: 0.8, fontSize: '1.4rem', cursor: 'help' }}>💀</span>}
             </h2>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: '600', marginBottom: '1.5rem' }}>
-              ID: {character.id} • BORN {character.birthYear}
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', fontWeight: '600', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>ID: {character.id}</span>
+              <span>•</span>
+              <span>BORN {character.birthYear}</span>
+              {character.isDead && character.ageFromSheet !== undefined && (
+                <>
+                  <span>•</span>
+                  <span style={{ color: '#9ca3af' }}>DIED ~{character.birthYear + character.ageFromSheet} (Age {character.ageFromSheet})</span>
+                </>
+              )}
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
@@ -142,7 +151,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
               <div style={{ flex: 1, background: '#f8fafc', padding: '0.75rem', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: '700' }}>AGE</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>{currentAge ?? '?'}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: '800' }}>
+                  {currentAge ?? '?'}
+                  {selectedSnapshot?.isDead && <span title="Deceased" style={{ marginLeft: '0.25rem', filter: 'grayscale(1)', opacity: 0.7, fontSize: '1rem', cursor: 'help' }}>💀</span>}
+                </div>
               </div>
               <div style={{ flex: 1, background: '#f8fafc', padding: '0.75rem', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: '700' }}>DUELS</div>

@@ -164,9 +164,15 @@ const computeStats = (
   evalYear: number
 ) => {
   const modifiers: Modifier[] = [];
-  if (!pChar) return { age: null, modifiers, totalBonus: 0, totalPenalty: 0, totalModifier: 0 };
+  if (!pChar) return { age: null, modifiers, totalBonus: 0, totalPenalty: 0, totalModifier: 0, isDead: false };
 
-  const ageAtCurrent = evalYear - pChar.birthYear;
+  let ageAtCurrent = evalYear - pChar.birthYear;
+  let isDeadAtSnapshot = false;
+
+  if (pChar.isDead && pChar.ageFromSheet !== undefined && ageAtCurrent > pChar.ageFromSheet) {
+    ageAtCurrent = pChar.ageFromSheet;
+    isDeadAtSnapshot = true;
+  }
 
   // 1. Skill bonus (earned or manual starting)
   if (effBonus) {
@@ -208,7 +214,7 @@ const computeStats = (
   const totalBonus = maxSkillValue + otherBonuses.reduce((s, b) => s + b.value, 0);
   const totalPenalty = penalties.reduce((s, p) => s + p.value, 0);
 
-  return { age: ageAtCurrent, modifiers, totalBonus, totalPenalty, totalModifier: totalBonus + totalPenalty };
+  return { age: ageAtCurrent, modifiers, totalBonus, totalPenalty, totalModifier: totalBonus + totalPenalty, isDead: isDeadAtSnapshot };
 };
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
@@ -228,14 +234,21 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
 
   // Build character map
   const characterMap = new Map<string, Character>();
+  const currentYearForDeathCheck = parseYear(currentDateStr);
   charactersData.forEach(c => {
     const name = c.FullName || `${c['First Name']} ${c.House}`.trim();
     if (name) {
+      const birthYear = parseYear(c['Year of Birth']);
+      const ageFromSheet = parseInt(c['Age']);
+      const isDead = !isNaN(ageFromSheet) && ageFromSheet < (currentYearForDeathCheck - birthYear);
+
       const character: Character = {
         id: parseInt(c['Character ID (numeric)']),
         fullName: name,
-        birthYear: parseYear(c['Year of Birth']),
+        birthYear,
         house: c.House,
+        ageFromSheet: isNaN(ageFromSheet) ? undefined : ageFromSheet,
+        isDead
       };
       characterMap.set(normalizeName(name), character);
     }
@@ -273,7 +286,7 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     const effBonus = getEffectiveSkillBonus(normName, currentHist);
     const stats = evalYear !== null 
       ? computeStats(pChar, effBonus, currentHist, evalYear)
-      : { age: null, modifiers: effBonus ? [{ name: effBonus.name, value: effBonus.value, type: 'bonus' as const, source: 'skill' as const }] : [], totalModifier: effBonus ? effBonus.value : 0 };
+      : { age: null, modifiers: effBonus ? [{ name: effBonus.name, value: effBonus.value, type: 'bonus' as const, source: 'skill' as const }] : [], totalModifier: effBonus ? effBonus.value : 0, isDead: pChar.isDead };
 
     if (!snapshotsMap.has(normName)) snapshotsMap.set(normName, []);
     snapshotsMap.get(normName)!.push({
@@ -281,7 +294,8 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       history: currentHist,
       modifiers: stats.modifiers,
       totalModifier: stats.totalModifier,
-      age: stats.age
+      age: stats.age,
+      isDead: stats.isDead
     });
   };
 
@@ -407,6 +421,8 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       outcome: d.Outcome,
       p1Age: stats1.age,
       p2Age: stats2.age,
+      p1IsDead: stats1.isDead,
+      p2IsDead: stats2.isDead,
       p1Modifiers: stats1.modifiers,
       p2Modifiers: stats2.modifiers,
       p1TotalBonus: stats1.totalBonus,

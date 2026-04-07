@@ -7,9 +7,13 @@ interface ModifierDetailsProps {
   onParticipantClick: (name: string) => void;
 }
 
-const ParticipantPanel: React.FC<{ name: string; age: number | null; modifiers: Modifier[]; total: number; gained: GainedModifier[]; duelsFought: number; duelsWon: number; onClick: () => void }> = ({ name, age, modifiers, total, gained, duelsFought, duelsWon, onClick }) => {
+const ParticipantPanel: React.FC<{ name: string; age: number | null; isDead?: boolean; modifiers: Modifier[]; total: number; gained: GainedModifier[]; duelsFought: number; duelsWon: number; onClick: () => void }> = ({ name, age, isDead, modifiers, total, gained, duelsFought, duelsWon, onClick }) => {
   return (
-    <div className="modifier-card header-button" style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '1.5rem', width: '100%', boxSizing: 'border-box' }} onClick={onClick}>
+    <div className="modifier-card header-button" style={{ 
+      cursor: 'pointer', transition: 'all 0.2s', padding: '1.5rem', width: '100%', boxSizing: 'border-box',
+      opacity: isDead ? 0.7 : 1,
+      filter: isDead ? 'grayscale(0.8)' : 'none'
+    }} onClick={onClick}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3 style={{ 
@@ -17,9 +21,13 @@ const ParticipantPanel: React.FC<{ name: string; age: number | null; modifiers: 
             fontWeight: '800', 
             lineHeight: 1.1,
             color: 'var(--text)', 
-            marginBottom: '0.75rem' 
+            marginBottom: '0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
           }}>
             {name || 'Unknown'}
+            {isDead && <span title="Deceased" style={{ filter: 'grayscale(1)', opacity: 0.8, fontSize: '1.2rem', cursor: 'help' }}>💀</span>}
           </h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
             <span style={{ 
@@ -200,6 +208,7 @@ const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel, onParticipantCl
       <ParticipantPanel 
         name={duel.participant1} 
         age={duel.p1Age} 
+        isDead={duel.p1IsDead}
         modifiers={duel.p1Modifiers} 
         total={duel.p1TotalModifier}
         gained={duel.p1Gained}
@@ -210,6 +219,7 @@ const ModifierDetails: React.FC<ModifierDetailsProps> = ({ duel, onParticipantCl
       <ParticipantPanel 
         name={duel.participant2} 
         age={duel.p2Age} 
+        isDead={duel.p2IsDead}
         modifiers={duel.p2Modifiers} 
         total={duel.p2TotalModifier}
         gained={duel.p2Gained}

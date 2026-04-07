@@ -15,6 +15,8 @@ export interface Character {
   fullName: string;
   birthYear: number;
   house: string;
+  ageFromSheet?: number;
+  isDead?: boolean;
   skillBonus?: { name: string; value: number } | null;
   currentModifiers?: Modifier[];
   currentTotal?: number;
@@ -31,6 +33,7 @@ export interface CharacterSnapshot {
   modifiers: Modifier[];
   totalModifier: number;
   age: number | null;
+  isDead?: boolean;
 }
 
 export interface CharHistory {
@@ -61,6 +64,8 @@ export interface ProcessedDuel extends Duel {
   id: string;
   p1Age: number | null;
   p2Age: number | null;
+  p1IsDead?: boolean;
+  p2IsDead?: boolean;
   p1Modifiers: Modifier[];
   p2Modifiers: Modifier[];
   p1TotalBonus: number;
