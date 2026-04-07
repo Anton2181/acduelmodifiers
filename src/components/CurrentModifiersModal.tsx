@@ -30,6 +30,8 @@ const ModifierPill: React.FC<{ modifier: Modifier }> = ({ modifier: m }) => (
 
 const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, onClose, fighters, onParticipantClick }) => {
   const [search, setSearch] = useState('');
+  const [showDead, setShowDead] = useState(true);
+  const [showNoncombatants, setShowNoncombatants] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'total', direction: 'desc' });
 
   if (!isOpen) return null;
@@ -42,8 +44,12 @@ const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, o
 
   const active = fighters
     .filter(f => {
-      const hasContent = (f.currentModifiers?.length ?? 0) > 0;
-      if (!hasContent) return false;
+      const isDead = f.isDead;
+      const isNoncombatant = !f.skillBonus && (f.totalDuels ?? 0) === 0;
+
+      if (!showDead && isDead) return false;
+      if (!showNoncombatants && isNoncombatant) return false;
+
       const q = search.toLowerCase();
       return (
         f.fullName.toLowerCase().includes(q) ||
@@ -105,19 +111,29 @@ const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, o
 
         {/* Search */}
         <div style={{ padding: '1rem 2rem', background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-            <input
-              type="text"
-              placeholder="Search combatants..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%', padding: '0.75rem 1rem 0.75rem 3rem',
-                borderRadius: '0.75rem', border: '1px solid var(--border)',
-                fontSize: '1rem', outline: 'none', fontFamily: 'inherit',
-              }}
-            />
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+              <input
+                type="text"
+                placeholder="Search combatants..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: '100%', padding: '0.75rem 1rem 0.75rem 3rem',
+                  borderRadius: '0.75rem', border: '1px solid var(--border)',
+                  fontSize: '1rem', outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', cursor: 'pointer', fontWeight: '600' }}>
+              <input type="checkbox" checked={showDead} onChange={e => setShowDead(e.target.checked)} style={{ cursor: 'pointer' }} />
+              Show Dead
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', cursor: 'pointer', fontWeight: '600' }}>
+              <input type="checkbox" checked={showNoncombatants} onChange={e => setShowNoncombatants(e.target.checked)} style={{ cursor: 'pointer' }} />
+              Show All Characters
+            </label>
           </div>
         </div>
 
@@ -149,9 +165,13 @@ const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, o
                       <td style={{ color: 'var(--text-dim)' }}>{f.totalDuels ?? 0}</td>
                       <td style={{ color: '#16a34a', fontWeight: '700' }}>{f.totalWins ?? 0}</td>
                       <td>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                          {mods.map((m, i) => <ModifierPill key={i} modifier={m} />)}
-                        </div>
+                        {mods.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                            {mods.map((m, i) => <ModifierPill key={i} modifier={m} />)}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', fontStyle: 'italic' }}>None</span>
+                        )}
                       </td>
                       <td>
                         <div style={{ 

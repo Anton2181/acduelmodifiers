@@ -12,6 +12,8 @@ interface FightersModalProps {
 
 const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters, onParticipantClick }) => {
   const [search, setSearch] = useState('');
+  const [showDead, setShowDead] = useState(true);
+  const [showNoncombatants, setShowNoncombatants] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'id', direction: 'asc' });
 
   if (!isOpen) return null;
@@ -24,6 +26,12 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
 
   const filteredFighters = fighters
     .filter(f => {
+      const isDead = f.isDead;
+      const isNoncombatant = !f.skillBonus && (f.totalDuels ?? 0) === 0;
+
+      if (!showDead && isDead) return false;
+      if (!showNoncombatants && isNoncombatant) return false;
+
       const q = search.toLowerCase();
       return (
         f.fullName.toLowerCase().includes(q) ||
@@ -96,23 +104,33 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
 
         {/* Search */}
         <div style={{ padding: '1rem 2rem', background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-            <input 
-              type="text" 
-              placeholder="Search by name or house..." 
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem 1rem 0.75rem 3rem',
-                borderRadius: '0.75rem',
-                border: '1px solid var(--border)',
-                fontSize: '1rem',
-                outline: 'none',
-                fontFamily: 'inherit'
-              }}
-            />
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+              <input 
+                type="text" 
+                placeholder="Search by name or house..." 
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem 0.75rem 3rem',
+                  borderRadius: '0.75rem',
+                  border: '1px solid var(--border)',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', cursor: 'pointer', fontWeight: '600' }}>
+              <input type="checkbox" checked={showDead} onChange={e => setShowDead(e.target.checked)} style={{ cursor: 'pointer' }} />
+              Show Dead
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-dim)', cursor: 'pointer', fontWeight: '600' }}>
+              <input type="checkbox" checked={showNoncombatants} onChange={e => setShowNoncombatants(e.target.checked)} style={{ cursor: 'pointer' }} />
+              Show All Characters
+            </label>
           </div>
         </div>
 
