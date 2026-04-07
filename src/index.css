@@ -104,118 +104,197 @@ h1, h2, h3 {
 }
 
 /* Table Card Styles */
-.duel-list {
-  width: 100%;
-  border-collapse: collapse; /* Fixed: use collapse for seamless highlight */
-}
+/* ─── Duel List (new card layout) ─────────────────────────────────── */
 
-.duel-row-group {
-  cursor: pointer;
-  transition: background 0.2s;
-  background: var(--panel);
-}
+/* Column width definitions — shared by header + every row */
+.dl-col--meta       { flex: 0 0 160px; padding: 0 1rem; }
+.dl-col--participant{ flex: 1 1 0;     padding: 0 1rem; min-width: 0; }
+.dl-col--stat       { flex: 0 0 68px;  text-align: center; padding: 0 0.5rem; }
+.dl-col--outcome    { flex: 0 0 240px; padding: 0 1rem; }
 
-.duel-cell {
-  padding: 1.25rem 1rem;
+/* Sticky header */
+.dl-header {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
   border-bottom: 1px solid var(--border);
-}
-
-/* Spacer Row between duels */
-.duel-spacer td {
-  height: 0.75rem;
-  border: none;
-  background: transparent;
-}
-
-/* UNIFIED HIGHLIGHT LOGIC */
-.duel-row-group.selected td {
-  background: rgba(29, 78, 216, 0.04);
-  border-top: 2px solid var(--primary);
-  border-bottom: 2px solid var(--primary);
-}
-
-.duel-row-group.selected.row-1 td:first-child {
-  border-left: 2px solid var(--primary);
-}
-
-.duel-row-group.selected.row-1 td:last-child {
-  border-right: 2px solid var(--primary);
-}
-
-/* Seamless middle for 2-row duel */
-.duel-row-group.selected.row-1 td {
-  border-bottom: none;
-}
-
-/* BUT Date (first) and Outcome (last) cells in Row 1 span BOTH rows, so they NEED a bottom border */
-.duel-row-group.selected.row-1 td:first-child,
-.duel-row-group.selected.row-1 td:last-child {
-  border-bottom: 2px solid var(--primary);
-}
-
-.duel-row-group.selected.row-2 td {
-  border-top: none;
-}
-
-/* Row 2 should NOT have side borders as it's sandwiched between the spanned cells */
-.duel-row-group.selected.row-2 td:first-child,
-.duel-row-group.selected.row-2 td:last-child {
-  border-left: none;
-  border-right: none;
-}
-
-
-.duel-row-1 {
-  font-weight: 700;
-  color: var(--text);
-  font-size: 1rem;
-}
-
-.duel-row-2 {
-  font-size: 0.825rem;
-  color: var(--text-dim);
-  font-weight: 500;
-  margin-top: 0.15rem;
-}
-
-.status-badge {
-  padding: 0.35rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  z-index: 1;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
 }
 
-.status-winner {
-  background: #ecfdf5;
+/* The header's stat/participant columns need matching flex */
+.dl-header .dl-col--participant,
+.dl-header .dl-col--stat {
+  text-align: center;
+}
+
+.dl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+}
+
+/* Card = one duel entry */
+.dl-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.dl-card--hovered {
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.07);
+}
+
+.dl-card--selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(29,78,216,0.12);
+  background: rgba(29,78,216,0.025);
+}
+
+/* Meta column (date + event) */
+.dl-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem;
+  border-right: 1px solid var(--border);
+}
+
+.dl-meta__date {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.dl-meta__event {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+  line-height: 1.3;
+}
+
+/* Participants block — grows to fill remaining space */
+.dl-participants {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* A single participant row */
+.dl-participant {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 0.65rem 0;
+  min-width: 0;
+}
+
+/* Thin horizontal rule between the two participants */
+.dl-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 1rem;
+}
+
+/* Name cell */
+.dl-name-cell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.dl-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.dl-name--winner {
   color: #059669;
-  border: 1px solid #d1fae5;
 }
 
-.modifier-tag {
+/* Gained badges row */
+.dl-gained-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.dl-gained {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
   font-size: 0.7rem;
+  font-weight: 700;
   padding: 0.15rem 0.5rem;
   border-radius: 9999px;
-  font-weight: 600;
-  margin-left: 0.5rem;
   border: 1px solid transparent;
 }
 
-.modifier-penalty {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fee2e2;
+.dl-gained--skill {
+  background: rgba(251,191,36,0.12);
+  color: #d97706;
+  border-color: rgba(251,191,36,0.25);
 }
 
-.modifier-bonus {
-  background: #f0fdf4;
-  color: #16a34a;
-  border-color: #dcfce7;
+.dl-gained--manual {
+  background: rgba(139,92,246,0.1);
+  color: #7c3aed;
+  border-color: rgba(139,92,246,0.2);
 }
+
+/* Stat values */
+.dl-stat {
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: block;
+  text-align: center;
+}
+
+.dl-stat--bonus   { color: #16a34a; }
+.dl-stat--penalty { color: #dc2626; }
+.dl-stat--zero    { color: var(--text-dim); font-weight: 500; }
+.dl-stat--dim     { color: var(--text-dim); font-weight: 500; }
+
+/* Outcome column */
+.dl-outcome {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  border-left: 1px solid var(--border);
+  padding: 1rem;
+}
+
+/* Older classes kept for backwards compat */
+.status-badge { padding: 0.3rem 0.65rem; border-radius: 0.45rem; font-size: 0.75rem; font-weight: 700; }
+.status-winner { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
+
 
 /* Modifier Detail Item */
 .modifier-detail-item {

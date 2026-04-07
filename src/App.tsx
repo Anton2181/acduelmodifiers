@@ -6,7 +6,7 @@ import ModifierDetails from './components/ModifierDetails';
 import FightersModal from './components/FightersModal';
 import CurrentModifiersModal from './components/CurrentModifiersModal';
 import ProfileModal from './components/ProfileModal';
-import { Swords, Calendar, Loader2, Users, TrendingUp } from 'lucide-react';
+import { Swords, Calendar, Loader2, Users, TrendingUp, Search } from 'lucide-react';
 
 const BTN_STYLE = {
   display: 'flex',
@@ -32,6 +32,7 @@ function App() {
   const [selectedDuelId, setSelectedDuelId] = useState<string | null>(null);
   const [isFightersModalOpen, setIsFightersModalOpen] = useState(false);
   const [isCurrentModifiersOpen, setIsCurrentModifiersOpen] = useState(false);
+  const [duelSearch, setDuelSearch] = useState('');
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
   const [selectedProfileSnapshot, setSelectedProfileSnapshot] = useState<string>('current');
   const [missingCharacters, setMissingCharacters] = useState<string[]>([]);
@@ -74,6 +75,19 @@ function App() {
     const targetNorm = normalizeName(selectedProfileName);
     return allFighters.find(f => normalizeName(f.fullName) === targetNorm) || null;
   }, [allFighters, selectedProfileName]);
+
+  const filteredDuels = useMemo(() => {
+    const q = duelSearch.toLowerCase().trim();
+    if (!q) return duels;
+    return duels.filter(d => {
+      const inParticipants = d.participant1.toLowerCase().includes(q) || d.participant2.toLowerCase().includes(q);
+      const inEvent = d.event.toLowerCase().includes(q);
+      const inDate = d.date.toLowerCase().includes(q);
+      const inOutcome = d.outcome.toLowerCase().includes(q);
+      const inModifiers = [...d.p1Gained, ...d.p2Gained].some(m => m.name.toLowerCase().includes(q));
+      return inParticipants || inEvent || inDate || inOutcome || inModifiers;
+    });
+  }, [duels, duelSearch]);
 
   if (loading) {
     return (
@@ -138,12 +152,37 @@ function App() {
       </header>
 
       <main className="main-panel">
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-dim)' }}>CHRONOLOGICAL DUELS</h2>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{duels.length} entries filtered</span>
+        <div style={{ padding: '0.75rem 1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+          <div 
+            title={`${filteredDuels.length} entries filtered`}
+            style={{ cursor: 'help' }}
+          >
+            <h2 style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Chronological Duels
+            </h2>
+          </div>
+          
+          <div style={{ position: 'relative', width: '300px' }}>
+            <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+            <input 
+              type="text" 
+              placeholder="Search participants, events, modifiers..." 
+              value={duelSearch}
+              onChange={e => setDuelSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.45rem 0.75rem 0.45rem 2.25rem',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--border)',
+                fontSize: '0.85rem',
+                outline: 'none',
+                background: '#f8fafc'
+              }}
+            />
+          </div>
         </div>
         <DuelList
-          duels={duels}
+          duels={filteredDuels}
           selectedDuelId={selectedDuelId}
           onSelectDuel={setSelectedDuelId}
         />
