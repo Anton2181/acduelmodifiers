@@ -50,21 +50,29 @@ const MASTER_OFFSET = 5;
 
 // ─── Skill Bonus Progression Tiers (checked highest first) ──────────────────
 
+// Helper to check if history contains at least one win against a level or higher
+const hasWinAgainstMinLevel = (h: CharHistory, minLevel: number) => {
+  for (const [level, count] of h.winsAgainstSkillLevel.entries()) {
+    if (level >= minLevel && count > 0) return true;
+  }
+  return false;
+};
+
 const SKILL_BONUS_TIERS: { name: string; value: number; check: (h: CharHistory) => boolean }[] = [
   {
     name: 'Master Duelist', value: 5,
-    check: h => (h.winsAgainstSkillLevel.get(4) ?? 0) > 0 && h.distinctPrimaryOpponentsDueled.size >= 24
+    check: h => hasWinAgainstMinLevel(h, 4) && h.distinctPrimaryOpponentsDueled.size >= 24
   },
   {
     name: 'Expert Duelist', value: 4,
-    check: h => (h.winsAgainstSkillLevel.get(3) ?? 0) > 0 && h.distinctPrimaryOpponentsDueled.size >= 12
+    check: h => hasWinAgainstMinLevel(h, 3) && h.distinctPrimaryOpponentsDueled.size >= 12
   },
   {
     name: 'Superior Duelist', value: 3,
-    check: h => (h.winsAgainstSkillLevel.get(2) ?? 0) > 0 && h.distinctPrimaryOpponentsDueled.size >= 6
+    check: h => hasWinAgainstMinLevel(h, 2) && h.distinctPrimaryOpponentsDueled.size >= 6
   },
   { name: 'Veteran Duelist', value: 2, check: h => h.winsAgainstPrimary >= 6 },
-  { name: 'Good Duelist',    value: 2, check: h => (h.winsAgainstSkillLevel.get(1) ?? 0) > 0 },
+  { name: 'Good Duelist',    value: 2, check: h => hasWinAgainstMinLevel(h, 1) },
   { name: 'Experienced Duelist', value: 1, check: h => h.totalDuels >= 6 },
   { name: 'Proven Duelist',  value: 1, check: h => h.hasWonNoPenaltyAgainstPrimary },
 ];

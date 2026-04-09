@@ -98,6 +98,14 @@ const getTierState = (tierName: string, isMet: boolean, history: any): TierState
   return 'UNMET';
 };
 
+const hasWinAgainstMinLevel = (h: any, minLevel: number) => {
+  if (!h?.winsAgainstSkillLevel) return false;
+  for (const [level, count] of h.winsAgainstSkillLevel.entries()) {
+    if (level >= minLevel && count > 0) return true;
+  }
+  return false;
+};
+
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character, initialSnapshotId = 'current' }) => {
   const [selectedSnapshotId, setSelectedSnapshotId] = useState<string>(initialSnapshotId);
 
@@ -294,9 +302,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ background: '#e0e7ff', color: '#4f46e5', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+2</div>
                   </div>
                   <BooleanRequirement 
-                    isMet={(h.winsAgainstSkillLevel.get(1) ?? 0) > 0} 
+                    isMet={hasWinAgainstMinLevel(h, 1)} 
                     label="Win vs +1 level primary opponent" 
-                    state={getTierState('Good Duelist', (h.winsAgainstSkillLevel.get(1) ?? 0) > 0, h)}
+                    state={getTierState('Good Duelist', hasWinAgainstMinLevel(h, 1), h)}
                   />
                 </div>
 
@@ -326,9 +334,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     state={getTierState('Superior Duelist', h.distinctPrimaryOpponentsDueled.size >= 6, h)}
                   />
                   <BooleanRequirement 
-                    isMet={(h.winsAgainstSkillLevel.get(2) ?? 0) > 0} 
+                    isMet={hasWinAgainstMinLevel(h, 2)} 
                     label="Win vs +2 level primary opponent" 
-                    state={getTierState('Superior Duelist', (h.winsAgainstSkillLevel.get(2) ?? 0) > 0, h)}
+                    state={getTierState('Superior Duelist', hasWinAgainstMinLevel(h, 2), h)}
                   />
                 </div>
 
@@ -345,9 +353,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     state={getTierState('Expert Duelist', h.distinctPrimaryOpponentsDueled.size >= 12, h)}
                   />
                   <BooleanRequirement 
-                    isMet={(h.winsAgainstSkillLevel.get(3) ?? 0) > 0} 
+                    isMet={hasWinAgainstMinLevel(h, 3)} 
                     label="Win vs +3 level primary opponent" 
-                    state={getTierState('Expert Duelist', (h.winsAgainstSkillLevel.get(3) ?? 0) > 0, h)}
+                    state={getTierState('Expert Duelist', hasWinAgainstMinLevel(h, 3), h)}
                   />
                 </div>
 
@@ -367,9 +375,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     state={getTierState('Master Duelist', h.distinctPrimaryOpponentsDueled.size >= 24, h)}
                   />
                   <BooleanRequirement 
-                    isMet={(h.winsAgainstSkillLevel.get(4) ?? 0) > 0} 
+                    isMet={hasWinAgainstMinLevel(h, 4)} 
                     label="Win vs +4 level primary opponent" 
-                    state={getTierState('Master Duelist', (h.winsAgainstSkillLevel.get(4) ?? 0) > 0, h)}
+                    state={getTierState('Master Duelist', hasWinAgainstMinLevel(h, 4), h)}
                   />
                 </div>
 
