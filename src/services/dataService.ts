@@ -184,6 +184,8 @@ function getBackfilledHistory(bonusName: string): CharHistory {
     }},
     { name: 'Good Duelist', apply: () => {
       h.winsAgainstSkillLevel.set(1, Math.max(h.winsAgainstSkillLevel.get(1) ?? 0, 1));
+      h.totalWins = Math.max(h.totalWins, 1);
+      h.winsAgainstPrimary = Math.max(h.winsAgainstPrimary, 1);
     }},
     { name: 'Veteran Duelist', apply: () => {
       h.winsAgainstPrimary = Math.max(h.winsAgainstPrimary, 6);
@@ -202,11 +204,15 @@ function getBackfilledHistory(bonusName: string): CharHistory {
       h.winsAgainstSkillLevel.set(3, Math.max(h.winsAgainstSkillLevel.get(3) ?? 0, 1));
       for (let i = 1; i <= 12; i++) h.distinctPrimaryOpponentsDueled.add(`__PreGameOpponent${i}__`);
       h.totalDuels = Math.max(h.totalDuels, 12);
+      h.winsAgainstPrimary = Math.max(h.winsAgainstPrimary, 6);
+      h.totalWins = Math.max(h.totalWins, 6);
     }},
     { name: 'Master Duelist', apply: () => {
       h.winsAgainstSkillLevel.set(4, Math.max(h.winsAgainstSkillLevel.get(4) ?? 0, 1));
       for (let i = 1; i <= 24; i++) h.distinctPrimaryOpponentsDueled.add(`__PreGameOpponent${i}__`);
       h.totalDuels = Math.max(h.totalDuels, 24);
+      h.winsAgainstPrimary = Math.max(h.winsAgainstPrimary, 6);
+      h.totalWins = Math.max(h.totalWins, 6);
     }},
   ];
 
