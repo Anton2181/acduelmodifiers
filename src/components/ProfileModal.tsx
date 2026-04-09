@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Character } from '../types';
 import { X, User, Trophy, Target, ShieldCheck, ChevronRight } from 'lucide-react';
-import { normalizeName, MANUAL_STARTING_BONUSES } from '../services/dataService';
+
 
 
 interface ProfileModalProps {
@@ -11,41 +11,91 @@ interface ProfileModalProps {
   initialSnapshotId?: string;
 }
 
-const ProgressBar = ({ current, max, label }: { current: number; max: number; label: string }) => {
+const ProgressBar = ({ current, max, label, state = 'UNMET' }: { current: number; max: number; label: string; state?: TierState }) => {
   const percent = Math.min(100, Math.max(0, (current / max) * 100));
   const isComplete = current >= max;
   
+  const colors = {
+    EARNED: { bar: '#22c55e', text: '#15803d', track: '#dcfce7' },
+    STARTING: { bar: '#6366f1', text: '#4338ca', track: '#e0e7ff' },
+    BYPASSED: { bar: '#94a3b8', text: '#475569', track: '#f1f5f9' },
+    UNMET: { bar: 'var(--primary)', text: 'var(--text-dim)', track: '#e2e8f0' }
+  }[state];
+
+  const effectivelyComplete = isComplete || state === 'STARTING' || state === 'BYPASSED';
+
   return (
     <div style={{ marginBottom: '0.75rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: '600', color: isComplete ? '#15803d' : 'var(--text-dim)' }}>
-        <span>{label}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: '600', color: effectivelyComplete ? colors.text : 'var(--text-dim)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          {label}
+          {state === 'STARTING' && <span style={{ fontSize: '0.65rem', fontWeight: '800', opacity: 0.7 }}>(STARTING)</span>}
+        </span>
         <span>{Math.min(current, max)} / {max}</span>
       </div>
-      <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+      <div style={{ height: '6px', background: colors.track, borderRadius: '3px', overflow: 'hidden' }}>
         <div style={{ 
           height: '100%', 
-          background: isComplete ? '#22c55e' : 'var(--primary)', 
-          width: `${percent}%`,
-          transition: 'width 0.3s ease'
+          background: colors.bar, 
+          width: `${effectivelyComplete ? (isComplete ? 100 : Math.max(percent, 20)) : percent}%`,
+          transition: 'width 0.3s ease',
+          opacity: (state === 'BYPASSED' && !isComplete) ? 0.6 : 1
         }} />
       </div>
     </div>
   );
 };
 
-const BooleanRequirement = ({ isMet, label }: { isMet: boolean; label: string }) => {
+const BooleanRequirement = ({ isMet, label, state = 'UNMET' }: { isMet: boolean; label: string; state?: TierState }) => {
+  const colors = {
+    EARNED: { bg: '#22c55e', text: '#15803d' },
+    STARTING: { bg: '#6366f1', text: '#4338ca' },
+    BYPASSED: { bg: '#94a3b8', text: '#475569' },
+    UNMET: { bg: '#cbd5e1', text: '#64748b' }
+  }[state];
+
+  const displayMet = isMet || state === 'STARTING' || state === 'BYPASSED';
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: '600', color: isMet ? '#15803d' : 'var(--text-dim)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.8rem', fontWeight: '600', color: colors.text }}>
       <div style={{ 
-        width: '16px', height: '16px', borderRadius: '50%', 
-        background: isMet ? '#22c55e' : '#cbd5e1', 
+        width: '18px', height: '18px', borderRadius: '50%', 
+        background: displayMet ? colors.bg : '#f1f5f9', 
+        border: displayMet ? 'none' : '1px solid #e2e8f0',
         display: 'flex', alignItems: 'center', justifyContent: 'center' 
       }}>
-        {isMet && <ChevronRight size={12} color="white" />}
+        {displayMet && <ChevronRight size={12} color="white" />}
       </div>
       {label}
+      {state === 'STARTING' && <span style={{ fontSize: '0.65rem', fontWeight: '800', opacity: 0.7, marginLeft: 'auto' }}>(STARTING)</span>}
     </div>
   );
+};
+
+const TIER_ORDER = [
+  'Master Duelist',
+  'Expert Duelist',
+  'Superior Duelist',
+  'Veteran Duelist',
+  'Good Duelist',
+  'Experienced Duelist',
+  'Proven Duelist'
+];
+
+type TierState = 'EARNED' | 'STARTING' | 'BYPASSED' | 'UNMET';
+
+const getTierState = (tierName: string, isMet: boolean, history: any): TierState => {
+  if (isMet) return 'EARNED';
+  if (history.startingSkillTierName === tierName) return 'STARTING';
+  
+  if (history.startingSkillTierName) {
+    const startIdx = TIER_ORDER.indexOf(history.startingSkillTierName);
+    const currIdx = TIER_ORDER.indexOf(tierName);
+    if (startIdx !== -1 && currIdx !== -1 && currIdx > startIdx) {
+      return 'BYPASSED';
+    }
+  }
+  return 'UNMET';
 };
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character, initialSnapshotId = 'current' }) => {
@@ -68,17 +118,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
   const mods = selectedSnapshot.modifiers;
   const total = selectedSnapshot.totalModifier;
   const currentAge = selectedSnapshot.age;
-  const effSkillMod = mods.find(m => m.source === 'skill' && !m.isOverridden);
-  const effSkillLevel = effSkillMod?.value ?? 0;
-  const effSkillName = effSkillMod?.name;
-  
-  const initialBonusName = character ? MANUAL_STARTING_BONUSES[normalizeName(character.fullName)]?.name : null;
-
-  const hasTier = (tierVal: number, specificNames: string[]) => {
-    if (initialBonusName && specificNames.includes(initialBonusName)) return true;
-    if (effSkillLevel === tierVal && effSkillName) return specificNames.includes(effSkillName);
-    return false;
-  };
 
   return (
     <div style={{
@@ -228,7 +267,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#b45309' }}>Proven Duelist</div>
                     <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+1</div>
                   </div>
-                  <BooleanRequirement isMet={hasTier(1, ['Proven Duelist']) || h.hasWonNoPenaltyAgainstPrimary} label="Win vs primary character (No penalties)" />
+                  <BooleanRequirement 
+                    isMet={h.hasWonNoPenaltyAgainstPrimary} 
+                    label="Win vs primary character (No penalties)" 
+                    state={getTierState('Proven Duelist', h.hasWonNoPenaltyAgainstPrimary, h)}
+                  />
                 </div>
 
                 <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
@@ -236,7 +279,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#b45309' }}>Experienced Duelist</div>
                     <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+1</div>
                   </div>
-                  <ProgressBar current={hasTier(1, ['Experienced Duelist']) ? 6 : h.totalDuels} max={6} label="Fight 6 duels total" />
+                  <ProgressBar 
+                    current={h.totalDuels} 
+                    max={6} 
+                    label="Fight 6 duels total" 
+                    state={getTierState('Experienced Duelist', h.totalDuels >= 6, h)}
+                  />
                 </div>
 
                 {/* Tier 2 */}
@@ -245,7 +293,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#4338ca' }}>Good Duelist</div>
                     <div style={{ background: '#e0e7ff', color: '#4f46e5', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+2</div>
                   </div>
-                  <BooleanRequirement isMet={hasTier(2, ['Good Duelist']) || (h.winsAgainstSkillLevel.get(1) ?? 0) > 0} label="Win vs +1 level primary opponent" />
+                  <BooleanRequirement 
+                    isMet={(h.winsAgainstSkillLevel.get(1) ?? 0) > 0} 
+                    label="Win vs +1 level primary opponent" 
+                    state={getTierState('Good Duelist', (h.winsAgainstSkillLevel.get(1) ?? 0) > 0, h)}
+                  />
                 </div>
 
                 <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
@@ -253,7 +305,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#4338ca' }}>Veteran Duelist</div>
                     <div style={{ background: '#e0e7ff', color: '#4f46e5', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+2</div>
                   </div>
-                  <ProgressBar current={hasTier(2, ['Veteran Duelist']) ? 6 : h.winsAgainstPrimary} max={6} label="Win 6 duels vs primary characters" />
+                  <ProgressBar 
+                    current={h.winsAgainstPrimary} 
+                    max={6} 
+                    label="Win 6 duels vs primary characters" 
+                    state={getTierState('Veteran Duelist', h.winsAgainstPrimary >= 6, h)}
+                  />
                 </div>
 
                 {/* Tier 3 */}
@@ -262,8 +319,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#BE185D' }}>Superior Duelist</div>
                     <div style={{ background: '#FCE7F3', color: '#DB2777', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+3</div>
                   </div>
-                  <ProgressBar current={hasTier(3, ['Superior Duelist']) ? 6 : h.distinctPrimaryOpponentsDueled.size} max={6} label="Fight 6 distinct primary opponents" />
-                  <BooleanRequirement isMet={hasTier(3, ['Superior Duelist']) || (h.winsAgainstSkillLevel.get(2) ?? 0) > 0} label="Win vs +2 level primary opponent" />
+                  <ProgressBar 
+                    current={h.distinctPrimaryOpponentsDueled.size} 
+                    max={6} 
+                    label="Fight 6 distinct primary opponents" 
+                    state={getTierState('Superior Duelist', h.distinctPrimaryOpponentsDueled.size >= 6, h)}
+                  />
+                  <BooleanRequirement 
+                    isMet={(h.winsAgainstSkillLevel.get(2) ?? 0) > 0} 
+                    label="Win vs +2 level primary opponent" 
+                    state={getTierState('Superior Duelist', (h.winsAgainstSkillLevel.get(2) ?? 0) > 0, h)}
+                  />
                 </div>
 
                 {/* Tier 4 */}
@@ -272,8 +338,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#9d174d' }}>Expert Duelist</div>
                     <div style={{ background: '#fce7f3', color: '#be185d', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>+4</div>
                   </div>
-                  <ProgressBar current={hasTier(4, ['Expert Duelist']) ? 12 : h.distinctPrimaryOpponentsDueled.size} max={12} label="Fight 12 distinct primary opponents" />
-                  <BooleanRequirement isMet={hasTier(4, ['Expert Duelist']) || (h.winsAgainstSkillLevel.get(3) ?? 0) > 0} label="Win vs +3 level primary opponent" />
+                  <ProgressBar 
+                    current={h.distinctPrimaryOpponentsDueled.size} 
+                    max={12} 
+                    label="Fight 12 distinct primary opponents" 
+                    state={getTierState('Expert Duelist', h.distinctPrimaryOpponentsDueled.size >= 12, h)}
+                  />
+                  <BooleanRequirement 
+                    isMet={(h.winsAgainstSkillLevel.get(3) ?? 0) > 0} 
+                    label="Win vs +3 level primary opponent" 
+                    state={getTierState('Expert Duelist', (h.winsAgainstSkillLevel.get(3) ?? 0) > 0, h)}
+                  />
                 </div>
 
                 {/* Tier 5 */}
@@ -285,8 +360,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '900', padding: '0.2rem 0.75rem', borderRadius: '0.5rem', fontSize: '1rem' }}>+5</div>
                   </div>
                   <p style={{ fontSize: '0.8rem', color: '#92400e', marginBottom: '1rem' }}>Master duelists also negate age-based maluses up to -5.</p>
-                  <ProgressBar current={hasTier(5, ['Master Duelist']) ? 24 : h.distinctPrimaryOpponentsDueled.size} max={24} label="Fight 24 distinct primary opponents" />
-                  <BooleanRequirement isMet={hasTier(5, ['Master Duelist']) || (h.winsAgainstSkillLevel.get(4) ?? 0) > 0} label="Win vs +4 level primary opponent" />
+                  <ProgressBar 
+                    current={h.distinctPrimaryOpponentsDueled.size} 
+                    max={24} 
+                    label="Fight 24 distinct primary opponents" 
+                    state={getTierState('Master Duelist', h.distinctPrimaryOpponentsDueled.size >= 24, h)}
+                  />
+                  <BooleanRequirement 
+                    isMet={(h.winsAgainstSkillLevel.get(4) ?? 0) > 0} 
+                    label="Win vs +4 level primary opponent" 
+                    state={getTierState('Master Duelist', (h.winsAgainstSkillLevel.get(4) ?? 0) > 0, h)}
+                  />
                 </div>
 
               </div>

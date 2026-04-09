@@ -144,6 +144,7 @@ function makeHistory(): CharHistory {
     hasWonNoPenaltyAgainstPrimary: false,
     accumulatedManualModifiers: [],
     firstDuelYear: null,
+    startingSkillTierName: null,
     lastEffectiveBonusName: null,
   };
 }
@@ -155,6 +156,60 @@ function cloneHistory(h: CharHistory): CharHistory {
     winsAgainstSkillLevel: new Map(h.winsAgainstSkillLevel),
     accumulatedManualModifiers: h.accumulatedManualModifiers.map(m => ({ ...m })),
   };
+}
+
+function getBackfilledHistory(bonusName: string): CharHistory {
+  const h = makeHistory();
+  const lower = bonusName.toLowerCase();
+
+  // Tier requirements (Cumulative)
+  const tiers = [
+    { name: 'Proven Duelist', apply: () => {
+      h.hasWonNoPenaltyAgainstPrimary = true;
+      h.totalDuels = Math.max(h.totalDuels, 1);
+      h.totalWins = Math.max(h.totalWins, 1);
+      h.winsAgainstPrimary = Math.max(h.winsAgainstPrimary, 1);
+      h.distinctPrimaryOpponentsDueled.add('__PreGameOpponent1__');
+    }},
+    { name: 'Experienced Duelist', apply: () => {
+      h.totalDuels = Math.max(h.totalDuels, 6);
+    }},
+    { name: 'Good Duelist', apply: () => {
+      h.winsAgainstSkillLevel.set(1, Math.max(h.winsAgainstSkillLevel.get(1) ?? 0, 1));
+    }},
+    { name: 'Veteran Duelist', apply: () => {
+      h.winsAgainstPrimary = Math.max(h.winsAgainstPrimary, 6);
+      h.totalWins = Math.max(h.totalWins, 6);
+      h.totalDuels = Math.max(h.totalDuels, 6);
+      h.distinctPrimaryOpponentsDueled.add('__PreGameOpponent1__');
+    }},
+    { name: 'Superior Duelist', apply: () => {
+      h.winsAgainstSkillLevel.set(2, Math.max(h.winsAgainstSkillLevel.get(2) ?? 0, 1));
+      for (let i = 1; i <= 6; i++) h.distinctPrimaryOpponentsDueled.add(`__PreGameOpponent${i}__`);
+      h.winsAgainstPrimary = Math.max(h.winsAgainstPrimary, 6);
+      h.totalWins = Math.max(h.totalWins, 6);
+      h.totalDuels = Math.max(h.totalDuels, 6);
+    }},
+    { name: 'Expert Duelist', apply: () => {
+      h.winsAgainstSkillLevel.set(3, Math.max(h.winsAgainstSkillLevel.get(3) ?? 0, 1));
+      for (let i = 1; i <= 12; i++) h.distinctPrimaryOpponentsDueled.add(`__PreGameOpponent${i}__`);
+      h.totalDuels = Math.max(h.totalDuels, 12);
+    }},
+    { name: 'Master Duelist', apply: () => {
+      h.winsAgainstSkillLevel.set(4, Math.max(h.winsAgainstSkillLevel.get(4) ?? 0, 1));
+      for (let i = 1; i <= 24; i++) h.distinctPrimaryOpponentsDueled.add(`__PreGameOpponent${i}__`);
+      h.totalDuels = Math.max(h.totalDuels, 24);
+    }},
+  ];
+
+  for (const tier of tiers) {
+    if (tier.name.toLowerCase() === lower) {
+      tier.apply();
+      break;
+    }
+  }
+
+  return h;
 }
 
 const computeStats = (
@@ -271,10 +326,12 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     return histories.get(normName)!;
   };
 
-  // Set initial lastEffectiveBonusName for characters with manual starting bonuses
-  // so the FIRST duel doesn't appear as a "gain" for a pre-existing bonus.
+  // Initialize histories with backfilled stats for characters with manual starting bonuses
   for (const [normName, bonus] of Object.entries(MANUAL_STARTING_BONUSES)) {
-    getHistory(normName).lastEffectiveBonusName = bonus.name;
+    const backfilled = getBackfilledHistory(bonus.name);
+    backfilled.startingSkillTierName = bonus.name;
+    backfilled.lastEffectiveBonusName = bonus.name; // Don't show redundant gain in first duel
+    histories.set(normName, backfilled);
   }
 
   const snapshotsMap = new Map<string, import('../types').CharacterSnapshot[]>();

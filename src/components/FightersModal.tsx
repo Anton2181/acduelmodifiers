@@ -156,7 +156,18 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
                       <td style={{ color: 'var(--text-dim)' }}>{f.birthYear}</td>
                       <td>
                         {bonus ? (
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)', fontWeight: '700', fontSize: '0.75rem', background: 'rgba(29, 78, 216, 0.05)', padding: '0.25rem 0.5rem', borderRadius: '0.5rem', border: '1px solid rgba(29, 78, 216, 0.1)' }}>
+                          <div style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '0.25rem', 
+                            color: '#16a34a', 
+                            fontWeight: '700', 
+                            fontSize: '0.75rem', 
+                            background: 'rgba(22, 163, 74, 0.08)', 
+                            padding: '0.15rem 0.65rem', 
+                            borderRadius: '1rem', 
+                            border: '1px solid rgba(22, 163, 74, 0.2)' 
+                          }}>
                             <Trophy size={12} /> {bonus.name} {bonus.value > 0 ? `+${bonus.value}` : bonus.value}
                           </div>
                         ) : (

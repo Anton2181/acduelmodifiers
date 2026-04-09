@@ -45,6 +45,7 @@ export interface CharHistory {
   hasWonNoPenaltyAgainstPrimary: boolean;
   accumulatedManualModifiers: Modifier[];
   firstDuelYear: number | null;
+  startingSkillTierName: string | null;
   lastEffectiveBonusName: string | null;
 }
 
