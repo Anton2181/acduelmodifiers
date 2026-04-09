@@ -423,7 +423,7 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
         if (p2EffLevel > 0) {
           p1Hist.winsAgainstSkillLevel.set(p2EffLevel, (p1Hist.winsAgainstSkillLevel.get(p2EffLevel) ?? 0) + 1);
         }
-        if (stats1.totalPenalty === 0) {
+        if (stats2.totalPenalty === 0) {
           p1Hist.hasWonNoPenaltyAgainstPrimary = true;
         }
       }
@@ -438,7 +438,7 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
         if (p1EffLevel > 0) {
           p2Hist.winsAgainstSkillLevel.set(p1EffLevel, (p2Hist.winsAgainstSkillLevel.get(p1EffLevel) ?? 0) + 1);
         }
-        if (stats2.totalPenalty === 0) {
+        if (stats1.totalPenalty === 0) {
           p2Hist.hasWonNoPenaltyAgainstPrimary = true;
         }
       }
