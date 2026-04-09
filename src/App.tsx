@@ -6,7 +6,8 @@ import ModifierDetails from './components/ModifierDetails';
 import FightersModal from './components/FightersModal';
 import CurrentModifiersModal from './components/CurrentModifiersModal';
 import ProfileModal from './components/ProfileModal';
-import { Swords, Calendar, Loader2, Users, TrendingUp, Search } from 'lucide-react';
+import MissingCharactersModal from './components/MissingCharactersModal';
+import { Swords, Calendar, Loader2, Users, TrendingUp, Search, AlertTriangle } from 'lucide-react';
 
 const BTN_STYLE = {
   display: 'flex',
@@ -36,6 +37,7 @@ function App() {
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
   const [selectedProfileSnapshot, setSelectedProfileSnapshot] = useState<string>('current');
   const [missingCharacters, setMissingCharacters] = useState<string[]>([]);
+  const [isMissingModalOpen, setIsMissingModalOpen] = useState(false);
 
 
 
@@ -136,10 +138,11 @@ function App() {
 
           {import.meta.env.DEV && missingCharacters.length > 0 && (
             <button
-              onClick={() => alert(`Characters missing from Chronicle:\n\n${missingCharacters.join('\n')}`)}
+              onClick={() => setIsMissingModalOpen(true)}
               style={{ ...BTN_STYLE, color: '#dc2626', borderColor: '#fecaca', background: '#fef2f2' }}
               className="header-button"
             >
+              <AlertTriangle size={18} />
               Missing ({missingCharacters.length})
             </button>
           )}
@@ -212,6 +215,12 @@ function App() {
         onClose={() => setSelectedProfileName(null)}
         character={selectedProfileCharacter}
         initialSnapshotId={selectedProfileSnapshot}
+      />
+
+      <MissingCharactersModal 
+        isOpen={isMissingModalOpen}
+        onClose={() => setIsMissingModalOpen(false)}
+        missingNames={missingCharacters}
       />
     </div>
   );
