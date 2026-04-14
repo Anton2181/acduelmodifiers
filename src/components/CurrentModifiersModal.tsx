@@ -53,7 +53,8 @@ const CurrentModifiersModal: React.FC<CurrentModifiersModalProps> = ({ isOpen, o
       const q = search.toLowerCase();
       return (
         f.fullName.toLowerCase().includes(q) ||
-        (f.currentModifiers ?? []).some(m => m.name.toLowerCase().includes(q))
+        (f.currentModifiers ?? []).some(m => m.name.toLowerCase().includes(q)) ||
+        f.id.toString() === q
       );
     })
     .sort((a, b) => {

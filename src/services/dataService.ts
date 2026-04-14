@@ -272,6 +272,11 @@ const computeStats = (
     }
   }
 
+  // 5. Special time-based modifiers
+  if (pChar.id === 258 && evalYear >= 97) {
+    modifiers.push({ name: 'One-handed', value: -3, type: 'penalty', source: 'other' });
+  }
+
   // Only the highest skill bonus counts; other bonuses (manual) stack
   const skillBonuses = modifiers.filter(m => m.source === 'skill');
   const otherBonuses = modifiers.filter(m => m.type === 'bonus' && m.source !== 'skill');
@@ -503,6 +508,8 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       p2TotalModifier: stats2.totalModifier,
       p1Gained,
       p2Gained,
+      p1Id: p1Char?.id ?? null,
+      p2Id: p2Char?.id ?? null,
       p1DuelsFought: p1Hist.totalDuels,
       p1DuelsWon: p1Hist.totalWins,
       p2DuelsFought: p2Hist.totalDuels,

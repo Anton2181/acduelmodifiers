@@ -77,6 +77,8 @@ export interface ProcessedDuel extends Duel {
   p2TotalModifier: number;
   p1Gained: GainedModifier[];
   p2Gained: GainedModifier[];
+  p1Id: number | null;
+  p2Id: number | null;
   p1DuelsFought: number;
   p1DuelsWon: number;
   p2DuelsFought: number;

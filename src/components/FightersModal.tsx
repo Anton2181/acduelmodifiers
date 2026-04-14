@@ -35,7 +35,8 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
       const q = search.toLowerCase();
       return (
         f.fullName.toLowerCase().includes(q) ||
-        (f.skillBonus?.name ?? '').toLowerCase().includes(q)
+        (f.skillBonus?.name ?? '').toLowerCase().includes(q) ||
+        f.id.toString() === q
       );
     })
     .sort((a, b) => {

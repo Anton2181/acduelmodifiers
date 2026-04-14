@@ -82,7 +82,10 @@ function App() {
     const q = duelSearch.toLowerCase().trim();
     if (!q) return duels;
     return duels.filter(d => {
-      const inParticipants = d.participant1.toLowerCase().includes(q) || d.participant2.toLowerCase().includes(q);
+      const inParticipants = d.participant1.toLowerCase().includes(q) || 
+                             d.participant2.toLowerCase().includes(q) ||
+                             d.p1Id?.toString() === q ||
+                             d.p2Id?.toString() === q;
       const inEvent = d.event.toLowerCase().includes(q);
       const inDate = d.date.toLowerCase().includes(q);
       const inOutcome = d.outcome.toLowerCase().includes(q);
