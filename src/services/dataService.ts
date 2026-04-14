@@ -274,7 +274,7 @@ const computeStats = (
 
   // 5. Special time-based modifiers
   if (pChar.id === 258 && evalYear >= 97) {
-    modifiers.push({ name: 'One-handed', value: -3, type: 'penalty', source: 'other' });
+    modifiers.push({ name: 'One-Hand', value: -2, type: 'penalty', source: 'other' });
   }
 
   // Only the highest skill bonus counts; other bonuses (manual) stack
