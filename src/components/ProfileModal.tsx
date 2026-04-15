@@ -127,6 +127,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
   const total = selectedSnapshot.totalModifier;
   const currentAge = selectedSnapshot.age;
 
+  const showsOneHand = snapshots.some(s => s.modifiers.some(m => m.name === 'One-Hand' || m.name === 'Master One-Hand'));
+  const showsOneArm = snapshots.some(s => s.modifiers.some(m => m.name === 'One-Arm' || m.name === 'Master One-Arm'));
+
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -380,6 +383,37 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, character,
                     state={getTierState('Master Duelist', hasWinAgainstMinLevel(h, 4), h)}
                   />
                 </div>
+
+                {/* Injury Masteries */}
+                {showsOneHand && (
+                  <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#b45309' }}>Special Bonus: Master One-Hand</div>
+                      <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>Offsets Malus</div>
+                    </div>
+                    <ProgressBar 
+                      current={h.winsWithOneHand} 
+                      max={4} 
+                      label="Win 4 duels with One-Hand applied" 
+                      state={h.winsWithOneHand >= 4 ? 'EARNED' : 'UNMET'}
+                    />
+                  </div>
+                )}
+                
+                {showsOneArm && (
+                  <div style={{ background: 'white', padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <div style={{ fontWeight: '800', fontSize: '1.1rem', color: '#b45309' }}>Special Bonus: Master One-Arm</div>
+                      <div style={{ background: '#fef3c7', color: '#d97706', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '0.5rem', fontSize: '0.8rem' }}>Offsets Malus</div>
+                    </div>
+                    <ProgressBar 
+                      current={h.winsWithOneArm} 
+                      max={4} 
+                      label="Win 4 duels with One-Arm applied" 
+                      state={h.winsWithOneArm >= 4 ? 'EARNED' : 'UNMET'}
+                    />
+                  </div>
+                )}
 
               </div>
             )}

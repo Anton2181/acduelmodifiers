@@ -43,6 +43,8 @@ export interface CharHistory {
   distinctPrimaryOpponentsDueled: Set<string>;
   winsAgainstSkillLevel: Map<number, number>;
   hasWonNoPenaltyAgainstPrimary: boolean;
+  winsWithOneHand: number;
+  winsWithOneArm: number;
   accumulatedManualModifiers: Modifier[];
   firstDuelYear: number | null;
   startingSkillTierName: string | null;

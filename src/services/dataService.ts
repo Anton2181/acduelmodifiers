@@ -150,6 +150,8 @@ function makeHistory(): CharHistory {
     distinctPrimaryOpponentsDueled: new Set(),
     winsAgainstSkillLevel: new Map(),
     hasWonNoPenaltyAgainstPrimary: false,
+    winsWithOneHand: 0,
+    winsWithOneArm: 0,
     accumulatedManualModifiers: [],
     firstDuelYear: null,
     startingSkillTierName: null,
@@ -251,6 +253,12 @@ const computeStats = (
   // 2. Accumulated manual modifiers (injuries, etc. from prior duels)
   for (const m of history.accumulatedManualModifiers) {
     modifiers.push({ ...m });
+    if (m.name === 'One-Hand' && history.winsWithOneHand >= 4) {
+      modifiers.push({ name: 'Master One-Hand', value: Math.abs(m.value), type: 'bonus', source: 'other' });
+    }
+    if (m.name === 'One-Arm' && history.winsWithOneArm >= 4) {
+      modifiers.push({ name: 'Master One-Arm', value: Math.abs(m.value), type: 'bonus', source: 'other' });
+    }
   }
 
   // 3. Age malus (with Master Duelist negation)
@@ -275,6 +283,9 @@ const computeStats = (
   // 5. Special time-based modifiers
   if (pChar.id === 258 && evalYear >= 97) {
     modifiers.push({ name: 'One-Hand', value: -2, type: 'penalty', source: 'other' });
+    if (history.winsWithOneHand >= 4) {
+      modifiers.push({ name: 'Master One-Hand', value: 2, type: 'bonus', source: 'other' });
+    }
   }
 
   // Only the highest skill bonus counts; other bonuses (manual) stack
@@ -422,8 +433,16 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
     const p1Won = normWinner === normP1;
     const p2Won = normWinner === normP2;
 
-    if (p1Won) p1Hist.totalWins++;
-    if (p2Won) p2Hist.totalWins++;
+    if (p1Won) {
+      p1Hist.totalWins++;
+      if (stats1.modifiers.some(m => m.name === 'One-Hand')) p1Hist.winsWithOneHand++;
+      if (stats1.modifiers.some(m => m.name === 'One-Arm')) p1Hist.winsWithOneArm++;
+    }
+    if (p2Won) {
+      p2Hist.totalWins++;
+      if (stats2.modifiers.some(m => m.name === 'One-Hand')) p2Hist.winsWithOneHand++;
+      if (stats2.modifiers.some(m => m.name === 'One-Arm')) p2Hist.winsWithOneArm++;
+    }
 
     // Update P1's record vs primary character P2
     if (p2Char) {
