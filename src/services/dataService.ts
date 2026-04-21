@@ -524,6 +524,7 @@ export const fetchAllData = async (): Promise<{ duels: ProcessedDuel[], currentD
       p1TotalPenalty: stats1.totalPenalty,
       p1TotalModifier: stats1.totalModifier,
       p2TotalBonus: stats2.totalBonus,
+      p2TotalPenalty: stats2.totalPenalty,
       p2TotalModifier: stats2.totalModifier,
       p1Gained,
       p2Gained,
