@@ -55,7 +55,7 @@ function App() {
         setAllFighters(allFighters);
         setMissingCharacters(missingCharacters);
         if (duels.length > 0) {
-          setSelectedDuelId(duels[0].id);
+          setSelectedDuelId(duels[duels.length - 1].id);
         }
       } catch (err) {
         setError('Failed to fetch duel data. Please check your connection.');
@@ -80,18 +80,21 @@ function App() {
 
   const filteredDuels = useMemo(() => {
     const q = duelSearch.toLowerCase().trim();
-    if (!q) return duels;
-    return duels.filter(d => {
-      const inParticipants = d.participant1.toLowerCase().includes(q) || 
-                             d.participant2.toLowerCase().includes(q) ||
-                             d.p1Id?.toString() === q ||
-                             d.p2Id?.toString() === q;
-      const inEvent = d.event.toLowerCase().includes(q);
-      const inDate = d.date.toLowerCase().includes(q);
-      const inOutcome = d.outcome.toLowerCase().includes(q);
-      const inModifiers = [...d.p1Gained, ...d.p2Gained].some(m => m.name.toLowerCase().includes(q));
-      return inParticipants || inEvent || inDate || inOutcome || inModifiers;
-    });
+    let result = duels;
+    if (q) {
+      result = duels.filter(d => {
+        const inParticipants = d.participant1.toLowerCase().includes(q) || 
+                               d.participant2.toLowerCase().includes(q) ||
+                               d.p1Id?.toString() === q ||
+                               d.p2Id?.toString() === q;
+        const inEvent = d.event.toLowerCase().includes(q);
+        const inDate = d.date.toLowerCase().includes(q);
+        const inOutcome = d.outcome.toLowerCase().includes(q);
+        const inModifiers = [...d.p1Gained, ...d.p2Gained].some(m => m.name.toLowerCase().includes(q));
+        return inParticipants || inEvent || inDate || inOutcome || inModifiers;
+      });
+    }
+    return [...result].reverse();
   }, [duels, duelSearch]);
 
   if (loading) {

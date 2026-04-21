@@ -151,7 +151,7 @@ const FightersModal: React.FC<FightersModalProps> = ({ isOpen, onClose, fighters
                 {filteredFighters.map(f => {
                   const bonus = f.skillBonus;
                   return (
-                    <tr key={f.id} onClick={() => { onParticipantClick(f.fullName); onClose(); }} style={{ opacity: f.isDead ? 0.65 : 1, filter: f.isDead ? 'grayscale(0.8)' : 'none' }}>
+                    <tr key={f.id} onClick={() => { onParticipantClick(f.fullName); }} style={{ opacity: f.isDead ? 0.65 : 1, filter: f.isDead ? 'grayscale(0.8)' : 'none' }}>
                       <td style={{ color: 'var(--text-dim)' }}>{f.id}</td>
                       <td><span style={{ fontWeight: '700' }}>{f.fullName}</span>{f.isDead && <span title={`Died at age ${f.ageFromSheet}`} style={{ marginLeft: '0.4rem', filter: 'grayscale(1)', opacity: 0.7, cursor: 'help' }}>💀</span>}</td>
                       <td style={{ color: 'var(--text-dim)' }}>{f.birthYear}</td>
